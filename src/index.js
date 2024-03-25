@@ -1,6 +1,7 @@
 require('dotenv').config();
 const {EmbedBuilder, Client, IntentsBitField, GuildMember} = require('discord.js');
-const { Player, QueryType } = require("discord-player");
+const { Player, QueryType, PlayerEvent, PlayerEventsEmitter } = require("discord-player");
+const { EmbedMessage } = require('./embed.js');
 
 const client = new Client({
     intents: [
@@ -13,10 +14,28 @@ const client = new Client({
 });
 
 const player = new Player(client);
+// const emitter= new PlayerEventsEmitter(client);
+const Embed = new EmbedMessage();
+
+player.handleVoiceState = (oldState, newState) => {
+    console.log("My voice state changed!");
+};
+
+// player.addListener("trackStart", (oldOne, newOne) => {
+//     console.log("addLIstener succeeded");
+//     if (newOne.status == "idle") {
+//         console.log("The song finished");
+//     }
+// });
+
 
 client.on('ready', (c) => {
     console.log(`${c.user.tag} is online`);
 }) // access events, listens when our bot is ready
+
+client.on('voiceStateUpdate', (oldState, newState) => {  
+    player.handleVoiceState(oldState, newState);
+});
 
 player.on("error", (queue, error) => {
     console.log(`[${queue.guild.name}] Error emitted from the queue: ${error.message}`);
@@ -27,14 +46,17 @@ player.on("connectionError", (queue, error) => {
 });
 
 player.on("trackStart", (queue, track) => {
+    console.log("Started playing music")
     queue.metadata.send(`🎶 | Started playing: **${track.title}** in **${queue.connection.channel.name}**!`);
 });
 
 player.on("trackAdd", (queue, track) => {
+    console.log("Track added")
     queue.metadata.send(`🎶 | Track **${track.title}** queued!`);
 });
 
 player.on("botDisconnect", (queue) => {
+    console.log("Manually disconnected")
     queue.metadata.send("❌ | I was manually disconnected from the voice channel, clearing queue!");
 });
 
@@ -61,6 +83,35 @@ client.on("messageCreate", async (message) => {
                         type: 3,
                         description: "The track you want to play",
                         required: true
+                    },
+                    {
+                        name: "search_engine",
+                        type: 3,
+                        description: "Search engine to find your tracks, default is AUTO",
+                        required: false,
+                        choices: [
+                            {
+                                name: "YouTube",
+                                value: QueryType.YOUTUBE
+                            },
+                            {
+                                name: "Spotify",
+                                value: QueryType.SPOTIFY_SONG
+                            },
+                            {
+                                name: "SpotifyPlaylist",
+                                value: QueryType.SPOTIFY_PLAYLIST
+                            },
+                            {
+                                name: "SpotifyAlbum",
+                                value: QueryType.SPOTIFY_ALBUM
+                            },
+                            {
+                                name: "Soundcloud",
+                                value: QueryType.SOUNDCLOUD
+                            },
+                        ],
+                        default: QueryType.AUTO
                     }
                 ]
             },
@@ -73,6 +124,35 @@ client.on("messageCreate", async (message) => {
                         type: 3,
                         description: "The track you want to play",
                         required: true
+                    },
+                    {
+                        name: "search_engine",
+                        type: 3,
+                        description: "Search engine to find your tracks, default is AUTO",
+                        required: false,
+                        choices: [
+                            {
+                                name: "YouTube",
+                                value: QueryType.YOUTUBE
+                            },
+                            {
+                                name: "Spotify",
+                                value: QueryType.SPOTIFY_SONG
+                            },
+                            {
+                                name: "SpotifyPlaylist",
+                                value: QueryType.SPOTIFY_PLAYLIST
+                            },
+                            {
+                                name: "SpotifyAlbum",
+                                value: QueryType.SPOTIFY_ALBUM
+                            },
+                            {
+                                name: "Soundcloud",
+                                value: QueryType.SOUNDCLOUD
+                            },
+                        ],
+                        default: QueryType.AUTO
                     }
                 ]
             },
@@ -87,6 +167,16 @@ client.on("messageCreate", async (message) => {
             {
                 name: "queue",
                 description: "Show the queue list"
+            },
+            {
+                name: "remove",
+                description: "Remove a track from queue",
+                options: [{
+                    name: "index",
+                    type: 4,
+                    description: "The index of track to remove",
+                    required: true
+                }]
             }
         ]);
 
@@ -103,22 +193,38 @@ client.on("interactionCreate", async (interaction) => {
 
     await player.extractors.loadDefault();
     
-    if (interaction.commandName === "play") {
+    if (interaction.commandName === "play" || interaction.commandName === "p") {
         await interaction.deferReply();
         
         const query = interaction.options.get("query").value;
-        console.log(query);
-        
-        const searchResult = await player
+        const search_engine = interaction.options.get("search_engine");
+
+        let searchResult = await player
             .search(query, {
                 requestedBy: interaction.user,
-                searchEngine: QueryType.AUTO
+                searchEngine: search_engine ? search_engine.value : QueryType.AUTO,
             })
             .catch(() => {});
-        
-        // console.log(searchResult.tracks[0]);
+
         if (!searchResult || !searchResult.tracks.length) {
-            return void interaction.followUp({ content: "No results were found!" });
+            if (search_engine) return void interaction.followUp({ content: "No results were found!" });
+            const availableEngines = [QueryType.SPOTIFY_PLAYLIST,
+                QueryType.SPOTIFY_ALBUM,
+                QueryType.SPOTIFY_SONG,
+                QueryType.YOUTUBE,
+                QueryType.YOUTUBE_PLAYLIST]
+            for (let i=0;i<availableEngines.length;i++) {
+                searchResult = await player
+                .search(query, {
+                    requestedBy: interaction.user,
+                    searchEngine: availableEngines[i]
+                })
+                .catch(() => {});
+                if (searchResult) break;
+            }
+            if (!searchResult || !searchResult.tracks.length) {
+                return void interaction.followUp({ content: "No results were found, We've tried using all search engines!" });
+            }
         }
 
         const queue = player.nodes.create(interaction.guild, {
@@ -132,60 +238,105 @@ client.on("interactionCreate", async (interaction) => {
             return void interaction.followUp({ content: "Could not join your voice channel!" });
         }
 
-        const msg = await interaction.followUp({ content: `⌛ | Loading your ${searchResult.playlist ? "playlist" : "track"}...` });
+        if (searchResult.playlist) {
+            searchResult.playlist.tracks.map(track => {
+                queue.addTrack(track);
+            });
+        }
+        else {
+            queue.addTrack(searchResult.tracks[0]);
+        }
+        console.log(searchResult.playlist)
+
         if (!queue.isPlaying()) {
-            await queue.play(searchResult.tracks[0]);
-            await msg.edit(`Now playing ${searchResult.tracks[0]}`);
+            await queue.play(queue.tracks.data[0]);
+            await interaction.followUp({embeds : [Embed.musicPlaying(queue.currentTrack)]});
+            queue.removeTrack(queue.currentTrack);
             return;
         }
-        searchResult.playlist ? queue.addTracks(searchResult.tracks) : queue.addTrack(searchResult.tracks[0]);
-        await msg.edit(`📝 | Added ${searchResult.tracks[0]} to queue list`);
+        
+        // searchResult.playlist ? queue.addTracks(searchResult.tracks) : queue.addTrack(searchResult.tracks[0]);
+        
+        
+        await interaction.followUp(`📝 | Added ${searchResult.tracks[0]} to queue list`);
     
-    } else if (interaction.commandName === "skip") {
+    } 
+    else if (interaction.commandName === "skip") {
+        
         await interaction.deferReply();
         const queue = player.nodes.get(interaction.guildId);
         if (!queue || !queue.isPlaying()) {
-            return void interaction.followUp({ content: "❌ | No music is being played!" });
+            return void interaction.followUp({ embeds: [Embed.exception('❌ | No music is being played!')] , ephemeral: true});
         }
-        const currentTrack = queue.currentTrack;
+        if (!queue.tracks.data.length) {
+            interaction.followUp({ embeds: [Embed.exception('🛑 | Stopped the player due to empty queue', 0xDEB600)] });
+            return void queue.delete();
+        }
+        
         queue.dispatcher.end();
         await queue.play(queue.tracks.data[0]);
-        
+        const currentTrack = queue.tracks.data[0]
         const success = queue.removeTrack(queue.tracks.data[0]);
-
+        
+        
         return void interaction.followUp({
-            content: success ? `✅ | Skipped **${currentTrack}**!` : "❌ | Something went wrong!"
+            embeds: success ? [Embed.musicPlaying(currentTrack)] : [Embed.exception("Something went wrong while we were trying to skip the current track. Try again later")]
         });
-    } else if (interaction.commandName === "stop") {
+    } 
+    else if (interaction.commandName === "stop") {
         await interaction.deferReply();
         const queue = player.nodes.get(interaction.guildId);
 
         if (!queue || !queue.isPlaying()) {
-            return void interaction.followUp({ content: "❌ | No music is being played!" });
+            return void interaction.followUp({ embeds: [Embed.exception('❌ | No music is being played!')] , ephemeral: true });
         }
         
         queue.delete();
         return void interaction.followUp({ content: "🛑 | Stopped the player!" });
-    } else if (interaction.commandName === "queue") {
+    } 
+    else if (interaction.commandName === "queue") {
         await interaction.deferReply();
         const queue = player.nodes.get(interaction.guildId);
 
-        if (!queue) return void interaction.followUp({ content : "Queue list is empty. Use /play to add some tracks" });
+        if (!queue) return void interaction.followUp({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
         let counter = 0;
         let queueBuilder = '```json\n' + `SHOWING QUEUE LIST - [${queue.tracks.data.length} Tracks]\n\n`;
         // let embeddedQueue = new EmbedBuilder()
         //         .setColor(0xD7D67C)
         //         .setAuthor({ name: `Songs in queue - [${queue.tracks.data.length} Tracks]`, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
-                
-        queue.tracks.data.map(track => {
-            queueBuilder += `${++counter}. ${track.description} -- 【${track.duration}】\n`;
+        queueBuilder += `► Now playing ${queue.currentTrack.description}\n`
+        let undisplayedTracks;
+        queue.tracks.data.forEach((track, index) => {
+            if ((queue.Builder += `${index}. ${track.description} -- 【${track.duration}】\n`).length < 1800) {
+                queueBuilder += `${++index}. ${track.description} -- 【${track.duration}】\n`;
+                undisplayedTracks = index;
+            }
             // embeddedQueue.addFields({name : `${counter++}. ${track.description} - [${track.duration}]`, value : '\u200B'})
             // console.log(track.description)
         })
+        undisplayedTracks = queue.tracks.data.length - undisplayedTracks;
+        if (undisplayedTracks) queueBuilder +=  `and ${undisplayedTracks} more ..\n`;
         queueBuilder += '\n⬑ This is the end of the queue```';
         return void interaction.followUp({ content : queueBuilder });
 
-    } else {
+    } 
+    else if (interaction.commandName === "remove") {
+        await interaction.deferReply();
+        const index = interaction.options.get("index").value;
+        const queue = player.nodes.get(interaction.guildId);
+        if (!queue || !queue.isPlaying()) {
+            return void interaction.followUp({ embeds: [Embed.exception('❌ | No music is being played!')] , ephemeral: true});
+        }
+        if (index < 1 || index > queue.tracks.data.length) {
+            return void interaction.followUp({ embeds: [Embed.exception(`Index must be in between 1 to ${queue.tracks.data.length}`)] , ephemeral: true})
+        }
+        const trackToRemove = queue.tracks.data[index-1]
+        const success = queue.removeTrack(trackToRemove);
+        return void interaction.followUp({
+            embeds: success ? [Embed.exception(`Removed ${trackToRemove.title} from queue`, 0x6FA8DC)] : [Embed.exception(`Failed to remove ${trackToRemove.title} from queue`)]
+        });
+    } 
+    else {
         interaction.reply({
             content: "Unknown command!",
             ephemeral: true
