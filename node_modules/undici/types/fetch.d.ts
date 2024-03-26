@@ -108,7 +108,7 @@ export interface RequestInit {
   body?: BodyInit
   redirect?: RequestRedirect
   integrity?: string
-  signal?: AbortSignal | null
+  signal?: AbortSignal
   credentials?: RequestCredentials
   mode?: RequestMode
   referrer?: string

@@ -18,14 +18,21 @@ class EmbedMessage {
         .setColor(color)
         .addFields({name : 'Now Playing', value : `[${obj.title}](${obj.url})`, inline : false})
         .addFields({name : 'Duration', value : `\`${obj.duration}\``, inline : true})
-        .addFields({name : 'Requester', value : `${obj.requestedBy}`, inline : true})
-        // .setFooter({ text: `${obj.queryType.charAt(0).toUpperCase() + obj.queryType.slice(1)}`, iconURL: getIcon(obj.queryType) })
+        .addFields({name : 'Requestor', value : `${obj.requestedBy}`, inline : true})
+        .addFields({ name : 'Source', value : `${obj.queryType.charAt(0).toUpperCase() + obj.queryType.slice(1)}`, inline : true })
         .setThumbnail(`${obj.thumbnail}`)
     }
-    exception(obj, color=0xF6546A) {
+    alert(obj, color=0xF6546A) {
         return new EmbedBuilder()
         .setColor(color)
         .setDescription(obj)
+    }
+    showCommands(obj, color=0x85C1E9) {
+        return new EmbedBuilder()
+        .setColor(color)
+        .setTitle(`Hello, ${obj.user.username}! These are all available commands`)
+        .addFields({name : 'Music Player', value : '```/p``` ```/play``` ```/skip``` ```/jump``` ```/queue``` ```/stop``` ```/remove``` ```/pause``` ```/resume```', inline : true})
+        .addFields({name : 'Utility', value : '```/help```', inline : true})
     }
 }
 
