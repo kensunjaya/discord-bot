@@ -18,7 +18,11 @@ nodemon
 ```
 
 If you encounter "Error: Used disallowed intents":
+<br>
 `Navigate to Discord Development Portal`
+<br>
 `On the left, select Bot`
+<br>
 `Scroll to bottom and find Privileged Gateway Intents`
+<br>
 `Enable all Intents`
