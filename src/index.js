@@ -24,7 +24,13 @@ client.on('ready', (c) => {
 
 player.events.on("playerStart", async (queue, track) => {
     if (guildHandler.get(queue.guild)) {
-        await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
+        if (guildHandler.get(queue.guild).commandName === 'play' && !queue.tracks.data.length) {
+            await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
+        }
+        else {
+            await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
+        }
+        // guildHandler.set(queue.guild, newInteraction);
     }
 });
 
@@ -34,6 +40,7 @@ player.events.on('disconnect', (queue) => {
 
 client.on("messageCreate", async (message) => {
     if (message.author.bot || !message.guild) return;
+    console.log(`[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.content}`)
     if (!client.application?.owner) await client.application?.fetch();
 
     if (message.content === "!deploy" && message.author.id === client.application?.owner?.id) {
@@ -45,6 +52,8 @@ client.on("messageCreate", async (message) => {
 
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand() || !interaction.guildId) return;
+
+    console.log(`[${interaction.guild.name} (${interaction.channel.name})] : [${interaction.user.username}] => ${interaction}`)
 
     if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
         return void interaction.reply({ content: "You are not in a voice channel!", ephemeral: true });
@@ -88,6 +97,9 @@ client.on("interactionCreate", async (interaction) => {
 
         const queue = player.nodes.create(interaction.guild, {
             metadata: interaction.channel,
+            leaveOnEmpty: false,
+            leaveOnEnd: false,
+            selfDeaf: true,
         });
         
         try {
@@ -97,10 +109,13 @@ client.on("interactionCreate", async (interaction) => {
             return void interaction.followUp({ content: "Could not join your voice channel!" });
         }
 
+        // searchResult.playlist.tracks = shuffle(searchResult.playlist.tracks);
+
         if (searchResult.playlist) {
             searchResult.playlist.tracks.map(track => {
                 queue.addTrack(track);
             });
+            await interaction.followUp({embeds : [Embed.addPlaylist(searchResult.playlist)]});
         }
         else {
             queue.addTrack(searchResult.tracks[0]);
@@ -113,11 +128,10 @@ client.on("interactionCreate", async (interaction) => {
             queue.removeTrack(queue.tracks.data[0]);
             return;
         }
+        if (!searchResult.playlist) {
+            await interaction.followUp(`📝 | Added **${searchResult.tracks[0].description}** to queue list`);
+        }
         
-        // searchResult.playlist ? queue.addTracks(searchResult.tracks) : queue.addTrack(searchResult.tracks[0]);
-        
-        
-        await interaction.followUp(`📝 | Added **${searchResult.tracks[0].description}** to queue list`);
     
     } 
     else if (interaction.commandName === "skip") {
@@ -231,7 +245,7 @@ client.on("interactionCreate", async (interaction) => {
         }
         await interaction.deferReply();
         
-        for (let i=0;i<index;i++) {
+        for (let i=0;i<index-1;i++) {
             if (!queue.removeTrack(queue.tracks.data[0])) {
                 return void interaction.followUp({embed : [Embed.alert(`Something went wrong`)]});
             }
@@ -239,6 +253,17 @@ client.on("interactionCreate", async (interaction) => {
         queue.node.skipTo(queue.tracks.data[0]);
         return void interaction.followUp({
             embeds: [Embed.alert(`Skipped ${index-1} tracks`, 0x6FA8DC)]
+        });
+    }
+    else if (interaction.commandName === "shuffle") {
+        const queue = player.nodes.get(interaction.guildId);
+        if (!queue || !queue.isPlaying()) {
+            return void interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+        }
+        await interaction.deferReply();
+        queue.tracks.shuffle();
+        return void interaction.followUp({
+            embeds: queue.tracks.data ? [Embed.alert(`Tracks has been shuffled!`, 0x73C6B6)] : [Embed.alert('Cannot shuffle tracks')]
         });
     }
     else {
