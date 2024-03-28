@@ -117,6 +117,20 @@ interactionCommands = [
         name: "resume",
         description: "Resume current track",
     },
+    {
+        name: "jump",
+        description: "Jump to specific track",
+        options: [{
+            name: "index",
+            type: 4,
+            description: "The index of track to play",
+            required: true
+        }]
+    },
+    {
+        name: "shuffle",
+        description: "Shuffle tracks in queue"
+    }
 ]
 
 module.exports = { interactionCommands }
