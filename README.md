@@ -16,7 +16,8 @@ The following command is used to run the bot
 ```bash
 nodemon
 ```
-
+Alternatively, run `run.bat` if you're on windows
+<br>
 If you encounter "Error: Used disallowed intents":
 <br>
 `Navigate to Discord Development Portal`
