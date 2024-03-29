@@ -1,7 +1,8 @@
 require('dotenv').config();
-const {EmbedBuilder, Client, IntentsBitField, GuildMember} = require('discord.js');
+const { EmbedBuilder, Client, IntentsBitField, GuildMember, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder } = require('discord.js');
 const { Player, QueryType } = require("discord-player");
 const { EmbedMessage } = require('./embed.js');
+const { Utility } = require('./utilities/utility.js');
 const { interactionCommands } = require('./commands.js');
 
 const client = new Client({
@@ -15,8 +16,10 @@ const client = new Client({
 });
 
 const player = new Player(client);
+const util = new Utility();
 const Embed = new EmbedMessage();
 const guildHandler = new Map();
+const queueHandler = new Map();
 
 client.on('ready', (c) => {
     console.log(`${c.user.tag} is online`);
@@ -45,15 +48,93 @@ client.on("messageCreate", async (message) => {
 
     if (message.content === "!deploy" && message.author.id === client.application?.owner?.id) {
         await message.guild.commands.set(interactionCommands);
-
         await message.reply("Deployed!");
     }
 });
 
 client.on("interactionCreate", async (interaction) => {
-    if (!interaction.isCommand() || !interaction.guildId) return;
+    console.log(`[${interaction.guild.name} (${interaction.channel.name})] : [${interaction.user.username}] => ${interaction}`);
 
-    console.log(`[${interaction.guild.name} (${interaction.channel.name})] : [${interaction.user.username}] => ${interaction}`)
+    if (interaction.isButton()) {
+        if (interaction.customId === 'next') {
+            const queue = player.nodes.get(interaction.guildId);
+            if (!queue) return void interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
+            if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user)) {
+                let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
+                queueHandler.get(interaction.channel).set(interaction.user, [msg, ++page]);
+                const [queueBuilder, row] = util.constructQueue(queue, page);
+                (await msg).edit({ content : queueBuilder, components : [row]});
+                return void interaction.deferUpdate();
+            }
+            const [queueBuilder, row] = util.constructQueue(queue);
+            const msg = await interaction.reply({ content : queueBuilder, components : [row], ephemeral: true});
+            queueHandler.set(interaction.channel, new Map());
+            queueHandler.get(interaction.channel).set(interaction.user, [msg, 1]);
+            
+        }
+        else if (interaction.customId === 'prev') {
+            const queue = player.nodes.get(interaction.guildId);
+            if (!queue) return void interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
+            if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user)) {
+                let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
+                queueHandler.get(interaction.channel).set(interaction.user, [msg, --page]);
+                const [queueBuilder, row] = util.constructQueue(queue, page);
+                (await msg).edit({ content : queueBuilder, components : [row]});
+                return void interaction.deferUpdate();
+            }
+            const [queueBuilder, row] = util.constructQueue(queue);
+            const msg = await interaction.reply({ content : queueBuilder, components : [row], ephemeral: true});
+            queueHandler.set(interaction.channel, new Map());
+            queueHandler.get(interaction.channel).set(interaction.user, [msg, 1]);
+        }
+        else if (interaction.customId === 'shuffle') {
+            const queue = player.nodes.get(interaction.guildId);
+            if (!queue || !queue.isPlaying()) return;
+            if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user)) {
+                queue.tracks.shuffle();
+                let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
+                const [queueBuilder, row] = util.constructQueue(queue, page);
+                (await msg).edit({ content : queueBuilder, components : [row]});
+                return void interaction.deferUpdate();
+            }
+        }
+        else if (interaction.customId === 'refresh') {
+            const queue = player.nodes.get(interaction.guildId);
+            if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user)) {
+                let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
+                if (!queue) {
+                    (await msg).edit({ content : ```elm QUEUE LIST IS EMPTY. Use /play to add some tracks```, components : []});
+                }
+                else {
+                    const [queueBuilder, row] = util.constructQueue(queue, page);
+                    (await msg).edit({ content : queueBuilder, components : [row]});
+                }
+                return void interaction.deferUpdate();
+            }
+            const [queueBuilder, row] = util.constructQueue(queue);
+            const msg = await interaction.reply({ content : queueBuilder, components : [row], ephemeral: true});
+            queueHandler.set(interaction.channel, new Map());
+            queueHandler.get(interaction.channel).set(interaction.user, [msg, 1]);
+        }
+        else if (interaction.customId === 'skip') {
+            const queue = player.nodes.get(interaction.guildId);
+            if (!queue || !queue.isPlaying()) return;
+            if (!queue.tracks.data.length) {
+                interaction.followUp({ embeds: [Embed.alert('⏹️  Stopped the player due to empty queue', 0xDEB600)] });
+                return void queue.delete();
+            }
+            queue.node.skipTo(queue.tracks.data[0]);
+            if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user)) {
+                let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
+                const [queueBuilder, row] = util.constructQueue(queue, page);
+                (await msg).edit({ content : queueBuilder, components : [row]});
+                return void interaction.deferUpdate();
+            }
+        }
+    }
+    
+
+    if (!interaction.isCommand() || !interaction.guildId) return;
 
     if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
         return void interaction.reply({ content: "You are not in a voice channel!", ephemeral: true });
@@ -170,25 +251,11 @@ client.on("interactionCreate", async (interaction) => {
         const queue = player.nodes.get(interaction.guildId);
 
         if (!queue) return void interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
-        let queueBuilder = '```json\n' + `SHOWING QUEUE LIST - [${queue.tracks.data.length} Tracks]\n\n`;
-        // let embeddedQueue = new EmbedBuilder()
-        //         .setColor(0xD7D67C)
-        //         .setAuthor({ name: `Songs in queue - [${queue.tracks.data.length} Tracks]`, iconURL: 'https://i.imgur.com/AfFp7pu.png', url: 'https://discord.js.org' })
-        queueBuilder += `► Now playing ${queue.currentTrack.description}\n`
-        let undisplayedTracks;
-        queue.tracks.data.forEach((track, index) => {
-            if ((queueBuilder + `${index}. ${track.description} -- 【${track.duration}】\n`).length < 1800) {
-                queueBuilder += `${++index}. ${track.description} -- 【${track.duration}】\n`;
-                undisplayedTracks = index;
-            }
-            // embeddedQueue.addFields({name : `${counter++}. ${track.description} - [${track.duration}]`, value : '\u200B'})
-        })
-        undisplayedTracks = queue.tracks.data.length - undisplayedTracks;
-        if (undisplayedTracks) queueBuilder +=  `and ${undisplayedTracks} more ..\n`;
-        queueBuilder += '\n⬑ This is the end of the queue```';
-        await interaction.deferReply();
-        return void interaction.followUp({ content : queueBuilder });
-
+        const [queueBuilder, row] = util.constructQueue(queue);
+        const msg = await interaction.reply({ content : queueBuilder, components : [row], ephemeral: true});
+        queueHandler.set(interaction.channel, new Map());
+        queueHandler.get(interaction.channel).set(interaction.user, [msg, 1]);
+        // (await msg).edit("Edited");
     } 
     else if (interaction.commandName === "remove") {
         const index = interaction.options.get("index").value;
