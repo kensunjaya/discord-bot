@@ -19,7 +19,7 @@ nodemon
 Alternatively, run `run.bat` if you're on windows
 <br>
 If you encounter "Error: Used disallowed intents":
-<br>
+<br><br>
 `Navigate to Discord Development Portal`
 <br>
 `On the left, select Bot`
