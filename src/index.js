@@ -127,9 +127,18 @@ client.on("interactionCreate", async (interaction) => {
             if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user)) {
                 let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
                 const [queueBuilder, row] = util.constructQueue(queue, page);
-                (await msg).edit({ content : queueBuilder, components : [row]});
-                return void interaction.deferUpdate();
+                try {
+                    (await msg).edit({ content : queueBuilder, components : [row]});
+                    return void interaction.deferUpdate();
+                }
+                catch (err) {
+                    console.log("Error : " + err);
+                }
             }
+            const [queueBuilder, row] = util.constructQueue(queue);
+            const msg = await interaction.reply({ content : queueBuilder, components : [row], ephemeral: true});
+            queueHandler.set(interaction.channel, new Map());
+            queueHandler.get(interaction.channel).set(interaction.user, [msg, 1]);
         }
     }
     
