@@ -46,6 +46,11 @@ class Utility {
             .setCustomId('skip')
             .setLabel('Skip')
             .setStyle(ButtonStyle.Primary);
+        
+        const info = new ButtonBuilder()
+            .setCustomId('info')
+            .setLabel('?')
+            .setStyle(ButtonStyle.Danger);
     
         const row = new ActionRowBuilder()
             .addComponents(prev, next, shuffle, skip, refresh);

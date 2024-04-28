@@ -18,8 +18,8 @@ class EmbedMessage {
         .setColor(color)
         .addFields({name : 'Now Playing', value : `[${obj.title}](${obj.url})`, inline : false})
         .addFields({name : 'Duration', value : `\`${obj.duration}\``, inline : true})
-        .addFields({name : 'Requestor', value : `\`${obj.requestedBy.username}\``, inline : true})
-        .addFields({ name : 'Source', value : `\`${obj.source}\``, inline : true })
+        .addFields({name : 'Requester', value : `\`${obj.requestedBy.username}\``, inline : true})
+        .addFields({ name : 'Source', value : `\`${obj.source.charAt(0).toUpperCase() + obj.source.slice(1)}\``, inline : true })
         .setThumbnail(`${obj.thumbnail}`)
     }
     alert(obj, color=0xF6546A) {
@@ -32,14 +32,20 @@ class EmbedMessage {
         .setColor(color)
         .setTitle(`Hello, ${obj.user.username}! These are all available commands`)
         .addFields({name : 'Music Player', value : '```/p``` ```/play``` ```/skip``` ```/jump``` ```/queue``` ```/stop``` ```/remove``` ```/pause``` ```/resume```', inline : true})
-        .addFields({name : 'Utility', value : '```/help```', inline : true})
+        .addFields({name : 'Utility', value : '```/help``` ```/info```', inline : true})
     }
-    addPlaylist(obj, color=0xDAF7A6) {
+    addPlaylist(obj, username, color=0xCFC7D8) {
         return new EmbedBuilder()
         .setColor(color)
-        .setAuthor({ name: `Added ${obj.tracks.length} tracks to queue list`, iconURL: getIcon(obj.source), url: obj.url })
-        .setDescription(`\`\`\`Title    : ${obj.title}\nDuration : ${obj.durationFormatted}\nAuthor   : ${obj.author.name}\`\`\``)
-        
+        .addFields({name : `Added ${obj.tracks.length} tracks to queue`, value : `[${obj.title}](${obj.url})`, inline : false})
+        .addFields({name : 'Duration', value : `\`${obj.durationFormatted}\``, inline : true})
+        .addFields({name : 'Author', value : `\`${obj.author.name}\``, inline : true})
+        .addFields({ name : 'Source', value : `\`${obj.source.charAt(0).toUpperCase() + obj.source.slice(1)}\``, inline : true })
+        .setThumbnail(`${obj.thumbnail}`)
+        .setFooter({text : `Type : ${obj.type.charAt(0).toUpperCase() + obj.type.slice(1)}`, iconURL : getIcon(obj.source)});
+    }
+    info() {
+        return '```yaml\nCreated by @kensunjaya\n\nThis bot is a music player bot that can play music from Youtube and Spotify\n\nSince this bot is still in development, there might be some bugs and errors. If you find one, please report it to me:\nkennethsunjaya@gmail.com\n\nAdditional Notes:\n- Spotify search engine is still in development. Some tracks might not be found\n- Even though the bot uses Spotify\'s search engine to retrieve music, it still streams the audio from YouTube.\n- Discord\'s WebHook token is expired after some period of time, so the bot might send new queue message instead of editing the old one```';
     }
 }
 
