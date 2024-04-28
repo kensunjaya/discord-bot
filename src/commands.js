@@ -130,6 +130,10 @@ interactionCommands = [
     {
         name: "shuffle",
         description: "Shuffle tracks in queue"
+    },
+    {
+        name: "info",
+        description : "Display information about the bot"
     }
 ]
 
