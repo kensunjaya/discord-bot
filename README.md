@@ -1,8 +1,10 @@
-# discord-bot
+<h1 align="center">Discord Bot</h1>
 A multifunctional discord bot. Currently in very early development stage
 
-To use the bot, create .env file outside src folder and store your token there
-```js
+To use the bot, you'll need to install [Node.js v16.11.0](https://nodejs.org/en/download/) or higher.
+
+Create .env file outside src folder and store your token there
+```
 TOKEN = PASTEYOURTOKENHERE
 ```
 
