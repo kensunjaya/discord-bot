@@ -31,8 +31,8 @@ class EmbedMessage {
         return new EmbedBuilder()
         .setColor(color)
         .setTitle(`Hello, ${obj.user.username}! These are all available commands`)
-        .addFields({name : 'Music Player', value : '```/p``` ```/play``` ```/skip``` ```/jump``` ```/queue``` ```/stop``` ```/remove``` ```/pause``` ```/resume```', inline : true})
-        .addFields({name : 'Utility', value : '```/help``` ```/info```', inline : true})
+        .addFields({name : 'Music Player', value : '```/p``` ```/play``` ```/skip``` ```/jump``` ```/queue``` ```/stop``` ```/remove``` ```/pause``` ```/resume``` ```/loop```', inline : true})
+        .addFields({name : 'Utility', value : '```/help``` ```/info``` ```/ping```', inline : true})
     }
     addPlaylist(obj, username, color=0xCFC7D8) {
         return new EmbedBuilder()

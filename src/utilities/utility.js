@@ -75,7 +75,11 @@ class Utility {
             estDuration += track.durationMS;
         })
         queueBuilder += tempQueue;
-        queueBuilder +=  `Page ${page} of ${totalPage}\n\n⬑ Estimated duration : ${new Utility().formatDuration(estDuration)}\`\`\``;
+        queueBuilder +=  `Page ${page} of ${totalPage}\n\n⬑ Estimated duration : ${new Utility().formatDuration(estDuration)}`;
+        if (queue.repeatMode === 2) {
+            queueBuilder += ' [♾️]\nRepeat mode : ON';
+        }
+        queueBuilder += '```';
         return [queueBuilder, row];
     }
 }
