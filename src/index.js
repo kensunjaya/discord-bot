@@ -1,6 +1,6 @@
 require('dotenv').config();
 const { EmbedBuilder, Client, IntentsBitField, GuildMember, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActivityType } = require('discord.js');
-const { Player, QueryType } = require("discord-player");
+const { Player, QueryType, QueueRepeatMode } = require("discord-player");
 const { EmbedMessage } = require('./embed.js');
 const { Utility } = require('./utilities/utility.js');
 const { interactionCommands } = require('./commands.js');
@@ -68,8 +68,6 @@ client.on("messageCreate", async (message) => {
 });
 
 client.on("interactionCreate", async (interaction) => {
-    
-
     if (interaction.isButton()) {
         console.log(`[${interaction.guild.name} (${interaction.channel.name})] : [${interaction.user.username}] => ${interaction.customId}`);
         if (interaction.customId === 'next') {
@@ -186,12 +184,15 @@ client.on("interactionCreate", async (interaction) => {
             .catch(() => {});
 
         if (!searchResult || !searchResult.tracks.length) {
-            if (search_engine) return void interaction.followUp({ content: "No results were found!" });
+            if (search_engine && search_engine.type != 3) return void interaction.followUp({ content: "No results were found!" });
             const availableEngines = [QueryType.SPOTIFY_PLAYLIST,
                 QueryType.SPOTIFY_ALBUM,
-                QueryType.SPOTIFY_SONG,
-                QueryType.YOUTUBE,
-                QueryType.YOUTUBE_PLAYLIST]
+                QueryType.SPOTIFY_SONG]
+            if (!search_engine) {
+                availableEngines.push(QueryType.YOUTUBE);
+                availableEngines.push(QueryType.YOUTUBE_PLAYLIST);
+                availableEngines.push(QueryType.SOUNDCLOUD);
+            }
             for (let i=0;i<availableEngines.length;i++) {
                 searchResult = await player
                 .search(query, {
@@ -240,21 +241,21 @@ client.on("interactionCreate", async (interaction) => {
             queue.removeTrack(queue.tracks.data[0]);
             return;
         }
+
         if (!searchResult.playlist) {
             await interaction.followUp(`📝 | Added **${searchResult.tracks[0].description}** to queue list`);
         }
-        
-    
     } 
+
     else if (interaction.commandName === "skip") {
         const queue = player.nodes.get(interaction.guildId);
         
         if (!queue || !queue.isPlaying()) {
-            return void interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+            return void await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
         }
         await interaction.deferReply();
         if (!queue.tracks.data.length) {
-            interaction.followUp({ embeds: [Embed.alert('⏹️  Stopped the player due to empty queue', 0xDEB600)] });
+            await interaction.followUp({ embeds: [Embed.alert('⏹️  Stopped the player due to empty queue', 0xDEB600)] });
             return void queue.delete();
         }
         
@@ -263,10 +264,27 @@ client.on("interactionCreate", async (interaction) => {
         // const currentTrack = queue.tracks.data[0];
         // const success = queue.removeTrack(currentTrack);
         
-        return void interaction.followUp({
+        return void await interaction.followUp({
             embeds: success ? [Embed.alert(`Skipped track to **${queue.tracks.data[0].description}**`, 0x85C1E9)] : [Embed.alert("Something went wrong while we were trying to skip the current track. Try again later")]
         });
     } 
+    else if (interaction.commandName === "loop") {
+        const queue = player.nodes.get(interaction.guildId);
+        if (!queue || !queue.isPlaying()) {
+            return void await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+        }
+        await interaction.deferReply();
+        const state = interaction.options.get("condition").value;
+        if (state === "on") {
+            queue.setRepeatMode(QueueRepeatMode.QUEUE);
+            await interaction.followUp({ embeds: [Embed.alert('🔁  Repeat mode : ON', 0xBBCEB2)] });
+        }
+        else if (state === "off") {
+            queue.setRepeatMode(QueueRepeatMode.OFF);
+            await interaction.followUp({ embeds: [Embed.alert('🔁  Repeat mode : OFF', 0xFF5520)] });
+        }
+    }
+
     else if (interaction.commandName === "stop") {
         const queue = player.nodes.get(interaction.guildId);
 
@@ -278,19 +296,19 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.deferReply();
         return void interaction.followUp({ content: "⏹️  Stopped the player!" });
     } 
+
     else if (interaction.commandName === "queue") {
         const queue = player.nodes.get(interaction.guildId);
 
-        if (!queue) return void interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
+        if (!queue || !queue.isPlaying()) return void interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
         const [queueBuilder, row] = util.constructQueue(queue);
         
         const msg = await interaction.reply({ content : queueBuilder, components : [row], ephemeral: true});
         
         queueHandler.set(interaction.channel, new Map());
         queueHandler.get(interaction.channel).set(interaction.user, [msg, 1, new Date().getTime()]);
-        
-        // (await msg).edit("Edited");
     } 
+
     else if (interaction.commandName === "remove") {
         const index = interaction.options.get("index").value;
         const queue = player.nodes.get(interaction.guildId);
@@ -349,12 +367,17 @@ client.on("interactionCreate", async (interaction) => {
         }
         await interaction.deferReply();
         
-        for (let i=0;i<index-1;i++) {
-            if (!queue.removeTrack(queue.tracks.data[0])) {
-                return void interaction.followUp({embed : [Embed.alert(`Something went wrong`)]});
+        if (queue.repeatMode === QueueRepeatMode.QUEUE) {
+            for (let i=0;i<index-1;i++) {
+                queue.addTrack(queue.tracks.data[0]);
+                if (!queue.removeTrack(queue.tracks.data[0])) {
+                    return void interaction.followUp({embed : [Embed.alert(`Something went wrong`)]});
+                }
             }
+            queue.node.skipTo(queue.tracks.data[0]);
         }
-        queue.node.skipTo(queue.tracks.data[0]);
+        else queue.node.skipTo(queue.tracks.data[index-1]);
+
         return void interaction.followUp({
             embeds: [Embed.alert(`Skipped ${index-1} tracks`, 0x6FA8DC)]
         });
@@ -369,6 +392,12 @@ client.on("interactionCreate", async (interaction) => {
         return void interaction.followUp({
             embeds: queue.tracks.data ? [Embed.alert(`Tracks has been shuffled!`, 0x73C6B6)] : [Embed.alert('Cannot shuffle tracks')]
         });
+    }
+    else if (interaction.commandName === "ping") {
+        await interaction.deferReply();
+        const reply = await interaction.fetchReply();
+        const ping = reply.createdTimestamp - interaction.createdTimestamp;
+        await interaction.followUp({content : `\`\`\`elm\nPong!\nLatency : ${ping}ms\nAPI     : ${client.ws.ping}ms\`\`\``});
     }
     else {
         interaction.reply({

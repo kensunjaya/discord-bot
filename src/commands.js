@@ -64,15 +64,7 @@ interactionCommands = [
                     },
                     {
                         name: "Spotify",
-                        value: QueryType.SPOTIFY_SONG
-                    },
-                    {
-                        name: "SpotifyPlaylist",
-                        value: QueryType.SPOTIFY_PLAYLIST
-                    },
-                    {
-                        name: "SpotifyAlbum",
-                        value: QueryType.SPOTIFY_ALBUM
+                        value: QueryType.SPOTIFY_SEARCH
                     },
                     {
                         name: "Soundcloud",
@@ -80,6 +72,28 @@ interactionCommands = [
                     },
                 ],
                 default: QueryType.AUTO
+            }
+        ]
+    },
+    {
+        name: "loop",
+        description: "Set loop mode",
+        options: [
+            {
+                name: "condition",
+                type: 3,
+                description: "Loop condition",
+                required: true,
+                choices : [
+                    {
+                        name: "on",
+                        value: "on"
+                    },
+                    {
+                        name: "off",
+                        value: "off"
+                    }
+                ]
             }
         ]
     },
@@ -134,6 +148,10 @@ interactionCommands = [
     {
         name: "info",
         description : "Display information about the bot"
+    },
+    {
+        name: "ping",
+        description : "Display network latency statistics"
     }
 ]
 
