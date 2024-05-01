@@ -1,9 +1,12 @@
 require('dotenv').config();
+const { PrismaClient } = require('@prisma/client');
 const { EmbedBuilder, Client, IntentsBitField, GuildMember, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActivityType } = require('discord.js');
 const { Player, QueryType, QueueRepeatMode } = require("discord-player");
 const { EmbedMessage } = require('./embed.js');
 const { Utility } = require('./utilities/utility.js');
 const { interactionCommands } = require('./commands.js');
+
+const prisma = new PrismaClient();
 
 const client = new Client({
     intents: [
@@ -160,6 +163,17 @@ client.on("interactionCreate", async (interaction) => {
             queueHandler.set(interaction.channel, new Map());
             queueHandler.get(interaction.channel).set(interaction.user, [msg, 1, new Date().getTime()]);
         }
+        else if (interaction.customId === 'fetch') {
+            const guilds = client.guilds.cache.map(guild => {
+                return {
+                    guild_id: guild.id,
+                    guild_name: guild.name,
+                    guild_members: guild.members
+                };
+            });
+            console.log(guilds) // this feature is not finished yet
+            await interaction.deferUpdate();
+        }
     }
     
 
@@ -170,6 +184,13 @@ client.on("interactionCreate", async (interaction) => {
         const reply = await interaction.fetchReply();
         const ping = reply.createdTimestamp - interaction.createdTimestamp;
         return void interaction.followUp({content : `\`\`\`elm\nPong!\nUser's latency : ${ping} ms\nBot's latency  : ${client.ws.ping} ms\`\`\``});
+    }
+    else if (interaction.commandName === "help") {
+        return void interaction.reply({ embeds : [Embed.showCommands(interaction)], ephemeral : true });
+    }
+    else if (interaction.commandName === "info") {
+        const [content, row] = Embed.info(interaction);
+        return void interaction.reply({ content : content, components : row ? [row] : null, ephemeral : true });
     }
 
     if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
@@ -333,12 +354,6 @@ client.on("interactionCreate", async (interaction) => {
             embeds: success ? [Embed.alert(`Removed ${trackToRemove.title} from queue`, 0x6FA8DC)] : [Embed.alert(`Failed to remove ${trackToRemove.title} from queue`)]
         });
     } 
-    else if (interaction.commandName === "help") {
-        return void interaction.reply({ embeds : [Embed.showCommands(interaction)], ephemeral : true });
-    }
-    else if (interaction.commandName === "info") {
-        return void interaction.reply({ content : Embed.info(), ephemeral : true });
-    }
     else if (interaction.commandName === "pause") {
         const queue = player.nodes.get(interaction.guildId);
         if (!queue || !queue.isPlaying()) {
