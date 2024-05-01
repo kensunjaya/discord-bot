@@ -16,7 +16,7 @@ class Utility {
         return formatBuilder;
     };
     constructQueue = (queue, page=1) => {
-        let queueBuilder = '```json\n' + `SHOWING QUEUE LIST - [${queue.tracks.data.length} Tracks]\n\n`;
+        let queueBuilder = '```json\n' + `SHOWING QUEUE - [${queue.tracks.data.length} Tracks]\n\n`;
         queueBuilder += `► Now playing ${queue.currentTrack.description}\n`
         let tempQueue = '';
         let estDuration = queue.currentTrack.durationMS;
