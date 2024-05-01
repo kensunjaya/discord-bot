@@ -1,4 +1,4 @@
-const { EmbedBuilder } = require('discord.js');
+const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { QueryType } = require("discord-player");
 
 
@@ -44,8 +44,21 @@ class EmbedMessage {
         .setThumbnail(`${obj.thumbnail}`)
         .setFooter({text : `Type : ${obj.type.charAt(0).toUpperCase() + obj.type.slice(1)}`, iconURL : getIcon(obj.source)});
     }
-    info() {
-        return '```yaml\nCreated by @kensunjaya\n\nThis bot is a music player bot that can play music from Youtube and Spotify\n\nSince this bot is still in development, there might be some bugs and errors. If you find one, please report it to me:\nkennethsunjaya@gmail.com\n\nAdditional Notes:\n- Spotify search engine is still in development. Some tracks might not be found\n- Even though the bot uses Spotify\'s search engine to retrieve music, it still streams the audio from YouTube.\n- Discord\'s WebHook token is expired after some period of time, so the bot might send new queue message instead of editing the old one```';
+    info(obj) {
+        const infoBuilder = '```yaml\nCreated by @kensunjaya\n\nThis bot is a music player bot that can play music from Youtube and Spotify\n\nSince this bot is still in development, there might be some bugs and errors. If you find one, please report it to me:\nkennethsunjaya@gmail.com\n\nAdditional Notes:\n- Spotify search engine is still in development. Some tracks might not be found\n- Even though the bot uses Spotify\'s search engine to retrieve music, it still streams the audio from YouTube.\n- Discord\'s WebHook token is expired after some period of time, so the bot might send new queue message instead of editing the old one```';
+        if (obj.user.id === process.env.ADMIN_ROLE_ID) {
+            const fetchButton = new ButtonBuilder()
+                .setCustomId('fetch')
+                .setLabel('UPDATE DATABASE')
+                .setStyle(ButtonStyle.Secondary);
+            
+            const row = new ActionRowBuilder()
+                .addComponents(fetchButton);
+
+            return [infoBuilder, row];
+        }
+
+        return [infoBuilder, null];
     }
 }
 
