@@ -118,10 +118,11 @@ client.on("interactionCreate", async (interaction) => {
         }
         else if (interaction.customId === 'refresh') {
             const queue = player.nodes.get(interaction.guildId);
+            if (!queue || !queue.isPlaying()) return;
             if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user) && (queueHandler.get(interaction.channel).get(interaction.user)[2] > new Date().getTime() - 600000)) {
                 let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
                 if (!queue) {
-                    (await msg).edit({ content : ```QUEUE LIST IS EMPTY. Use /play to add some tracks```, components : []});
+                    (await msg).edit({ content : '```QUEUE LIST IS EMPTY. Use /play to add some tracks```', components : []});
                 }
                 else {
                     const [queueBuilder, row] = util.constructQueue(queue, page);
@@ -163,6 +164,13 @@ client.on("interactionCreate", async (interaction) => {
     
 
     if (!interaction.isCommand() || !interaction.guildId) return;
+
+    if (interaction.commandName === "ping") {
+        await interaction.deferReply();
+        const reply = await interaction.fetchReply();
+        const ping = reply.createdTimestamp - interaction.createdTimestamp;
+        return void interaction.followUp({content : `\`\`\`elm\nPong!\nUser's latency : ${ping} ms\nBot's latency  : ${client.ws.ping} ms\`\`\``});
+    }
 
     if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
         return void interaction.reply({ content: "You are not in a voice channel!", ephemeral: true });
@@ -392,12 +400,6 @@ client.on("interactionCreate", async (interaction) => {
         return void interaction.followUp({
             embeds: queue.tracks.data ? [Embed.alert(`Tracks has been shuffled!`, 0x73C6B6)] : [Embed.alert('Cannot shuffle tracks')]
         });
-    }
-    else if (interaction.commandName === "ping") {
-        await interaction.deferReply();
-        const reply = await interaction.fetchReply();
-        const ping = reply.createdTimestamp - interaction.createdTimestamp;
-        await interaction.followUp({content : `\`\`\`elm\nPong!\nLatency : ${ping}ms\nAPI     : ${client.ws.ping}ms\`\`\``});
     }
     else {
         interaction.reply({

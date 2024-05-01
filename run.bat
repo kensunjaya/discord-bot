@@ -1,1 +1,2 @@
-node src\index.js
+node src\index.tsx
+pause
