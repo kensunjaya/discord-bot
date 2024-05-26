@@ -6,6 +6,7 @@ const { EmbedMessage } = require('./embed.js');
 const { Utility } = require('./utilities/utility.js');
 const { interactionCommands } = require('./commands.js');
 
+
 const prisma = new PrismaClient();
 
 const client = new Client({
@@ -29,7 +30,12 @@ client.on('ready', (c) => {
     client.user.setPresence({
         activities: [{ name: `Type !deploy to enable commands`, type: ActivityType.Custom }],
     });
+    
 }) // access events, listens when our bot is ready
+
+client.on('unhandledRejection', (err) => {
+	console.error('[Rejection Occured]: ', err.message);
+}); // API error handling
 
 player.events.on("playerStart", async (queue, track) => {
     if (guildHandler.get(queue.guild)) {
@@ -64,7 +70,7 @@ client.on("messageCreate", async (message) => {
     console.log(`[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.content}`)
     if (!client.application?.owner) await client.application?.fetch();
 
-    if (message.content === "!deploy" && message.author.id === client.application?.owner?.id) {
+    if (message.content === "!deploy") {
         await message.guild.commands.set(interactionCommands);
         await message.reply("Bot successfully deployed! Type /help to see the list of commands");
     }
@@ -424,4 +430,6 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
+module.exports = { client };
 client.login(process.env.TOKEN);
+

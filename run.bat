@@ -1,2 +1,2 @@
-node src\index.tsx
+node server\server.mjs
 pause
