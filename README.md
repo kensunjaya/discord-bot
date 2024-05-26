@@ -6,6 +6,8 @@ To use the bot, you'll need to install [Node.js v16.11.0](https://nodejs.org/en/
 Create .env file outside src folder and store your token there
 ```
 TOKEN = PASTEYOURTOKENHERE
+DATABASE_URL="postgresql://[username]:[password]@localhost:[port]/[dbname]"
+ADMIN_ROLE_ID = YOUR DISCORD ID
 ```
 
 Before running the bot, make sure to install all depedencies by typing the following command:
