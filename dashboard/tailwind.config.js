@@ -1,12 +1,14 @@
-module.exports = {
-  purge: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
-  darkMode: false, // or 'media' or 'class'
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+  ],
   theme: {
     extend: {
       colors: {
-        'background': '#E1F1FD',
+        'background': '#EEF5FF',
         'blues': '#170072',
-        'bluesa': '#9BB1D0',
+        'bluesa': '#D2DAFF',
         'bluesk': '#4663AC',
         'bluesi': '#FFFFFF',
         'darkblue': '#170072',
@@ -16,21 +18,9 @@ module.exports = {
         'greenapr': '#009F5C',
         'grays': '#A0A0A0',
         'reds': '#E00000', 
-        'whites': '#FFFFFF',
-      },
-      fontFamily: {
-        'krona-one': ['"Krona One"', 'sans-serif'],
-        'luckiest-guy': ['"Luckiest Guy"', 'cursive'],
-      },
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic':
-          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
-      },
+      }
     },
-  },
-  variants: {
-    extend: {},
   },
   plugins: [],
 }
+

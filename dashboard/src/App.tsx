@@ -1,5 +1,5 @@
 import React from 'react';
-import './App.css';
+// import './App.css';
 import Navbar from "./components/navbar"
 import { useEffect, useState } from "react";
 
@@ -83,27 +83,16 @@ function App() {
       <link rel="preconnect" href="https://fonts.googleapis.com"/>
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin=""/>
       <link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;1,300&display=swap" rel="stylesheet"/>
-      
-      <div style={{display : 'flex'}}>
+      <div className="flex">
         <Navbar client={profile}/>
-        <div style={{padding : "1rem"}}>
-          <div>
-            <h2>Server Joined : {guilds.length}</h2>
+        <div>
+          <div className="m-4">
+            <div className="text-lg text-black font-semibold">Server Joined : {guilds.length}</div>
           </div>
-          <div style={
-              {
-                  display : "grid",
-                  gridTemplateColumns : "1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr",
-                  rowGap : "1rem",
-                  columnGap : "1rem",
-                  transitionDuration : "0.5s",
-                  fontFamily: "sans-serif",
-                  justifyItems : "center"
-              }
-          }>
+          <div className="flex flex-wrap">
             {guilds.map((guild) => (
-              <div style={{padding : "1rem", backgroundColor: "#ADBBDA"}} className='text-blues'>
-                <strong style={{paddingBottom : "0.1rem"}}>{guild.guild_name}</strong>
+              <div className="text-black bg-bluesa p-4 ml-4 my-2 rounded-xl">
+                <div className="pb-1 font-semibold">{guild.guild_name}</div>
                 <div style={{paddingBottom : "0.1rem", paddingTop : "0.2rem"}}>{guild.join_date}</div>
                 <div style={{paddingBottom : "0.5rem"}}>Member count : {guild.guild_members_count}</div>
                 <img src={guild.guild_icon} alt="Guild Icon" style={{width: "10rem", height: "10rem"}}/>
