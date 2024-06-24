@@ -145,29 +145,36 @@ client.on("interactionCreate", async (interaction) => {
             queueHandler.get(interaction.channel).set(interaction.user, [msg, 1, new Date().getTime()]);
         }
         else if (interaction.customId === 'skip') {
-            const queue = player.nodes.get(interaction.guildId);
-            if (!queue || !queue.isPlaying()) return;
-            if (!queue.tracks.data.length) {
-                await interaction.channel.send({ embeds: [Embed.alert('⏹️  Stopped the player due to empty queue', 0xDEB600)] });
-                await interaction.deferUpdate();
-                return void queue.delete();
-            }
-            queue.node.skipTo(queue.tracks.data[0]);
-            if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user) && (queueHandler.get(interaction.channel).get(interaction.user)[2] > new Date().getTime() - 600000)) {
-                try {
-                    let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
-                    const [queueBuilder, row] = util.constructQueue(queue, page);
-                    (await msg).edit({ content : queueBuilder, components : [row]});
-                    return void await interaction.deferUpdate();
+            try {
+                const queue = player.nodes.get(interaction.guildId);
+                if (!queue || !queue.isPlaying()) return;
+                if (!queue.tracks.data.length) {
+                    await interaction.channel.send({ embeds: [Embed.alert('⏹️  Stopped the player due to empty queue', 0xDEB600)] });
+                    await interaction.deferUpdate();
+                    return void queue.delete();
                 }
-                catch (err) {
-                    return void console.log("Error : " + err);
+                queue.node.skipTo(queue.tracks.data[0]);
+                if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user) && (queueHandler.get(interaction.channel).get(interaction.user)[2] > new Date().getTime() - 600000)) {
+                    try {
+                        let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
+                        const [queueBuilder, row] = util.constructQueue(queue, page);
+                        (await msg).edit({ content : queueBuilder, components : [row]});
+                        return void await interaction.deferUpdate();
+                    }
+                    catch (err) {
+                        return void console.log("Error : " + err);
+                    }
                 }
+                const [queueBuilder, row] = util.constructQueue(queue);
+                const msg = await interaction.channel.send({ content : queueBuilder, components : [row], ephemeral: true});
+                queueHandler.set(interaction.channel, new Map());
+                queueHandler.get(interaction.channel).set(interaction.user, [msg, 1, new Date().getTime()]);
             }
-            const [queueBuilder, row] = util.constructQueue(queue);
-            const msg = await interaction.channel.send({ content : queueBuilder, components : [row], ephemeral: true});
-            queueHandler.set(interaction.channel, new Map());
-            queueHandler.get(interaction.channel).set(interaction.user, [msg, 1, new Date().getTime()]);
+            catch (error) {
+                console.log(error);
+                return void interaction.channel.send(`Something went wrong: ${error.message}`);
+            }
+            
         }
         else if (interaction.customId === 'fetch') {
             const guilds = client.guilds.cache.map(guild => {
@@ -283,25 +290,32 @@ client.on("interactionCreate", async (interaction) => {
     } 
 
     else if (interaction.commandName === "skip") {
-        const queue = player.nodes.get(interaction.guildId);
+        try {
+            const queue = player.nodes.get(interaction.guildId);
         
-        if (!queue || !queue.isPlaying()) {
-            return void await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+            if (!queue || !queue.isPlaying()) {
+                return void await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+            }
+            await interaction.deferReply();
+            if (!queue.tracks.data.length) {
+                await interaction.followUp({ embeds: [Embed.alert('⏹️  Stopped the player due to empty queue', 0xDEB600)] });
+                return void queue.delete();
+            }
+            
+            const success = queue.node.skipTo(queue.tracks.data[0]);
+            // await queue.node.play(queue.tracks.data[0]);
+            // const currentTrack = queue.tracks.data[0];
+            // const success = queue.removeTrack(currentTrack);
+            
+            return void await interaction.followUp({
+                embeds: success ? [Embed.alert(`Skipped track to **${queue.tracks.data[0].description}**`, 0x85C1E9)] : [Embed.alert("Something went wrong while we were trying to skip the current track. Try again later")]
+            });
         }
-        await interaction.deferReply();
-        if (!queue.tracks.data.length) {
-            await interaction.followUp({ embeds: [Embed.alert('⏹️  Stopped the player due to empty queue', 0xDEB600)] });
-            return void queue.delete();
+        catch (error) {
+            console.log(error);
+            return void await interaction.reply(`Something went wrong: ${error.message}`);
         }
         
-        const success = queue.node.skipTo(queue.tracks.data[0]);
-        // await queue.node.play(queue.tracks.data[0]);
-        // const currentTrack = queue.tracks.data[0];
-        // const success = queue.removeTrack(currentTrack);
-        
-        return void await interaction.followUp({
-            embeds: success ? [Embed.alert(`Skipped track to **${queue.tracks.data[0].description}**`, 0x85C1E9)] : [Embed.alert("Something went wrong while we were trying to skip the current track. Try again later")]
-        });
     } 
     else if (interaction.commandName === "loop") {
         const queue = player.nodes.get(interaction.guildId);

@@ -62,14 +62,28 @@ app.get('/guilds', async (req, res) => {
 })
 
 app.get('/bot', async (req, res) => {
-  const bot_profile = {
-    id : client.user.id,
-    username : client.user.username,
-    tag : client.user.discriminator,
-    dateCreated : new Date(client.user.createdTimestamp).toLocaleDateString("en-US"),
-    avatar : client.user.avatarURL(),
-    online : client.isReady()
+  let bot_profile = null;
+  if (client) {
+    bot_profile = {
+      id : client.user.id,
+      username : client.user.username,
+      tag : client.user.discriminator,
+      dateCreated : new Date(client.user.createdTimestamp).toLocaleDateString("en-US"),
+      avatar : client.user.avatarURL(),
+      online : client.isReady()
+    }
   }
+  else {
+    bot_profile = {
+      id : null,
+      username : null,
+      tag : null,
+      dateCreated : null,
+      avatar : null,
+      online : false
+    }
+  }
+
   res.status(200).json(bot_profile);
 })
 

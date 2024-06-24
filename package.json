@@ -22,6 +22,8 @@
     "ffmpeg": "^0.0.4",
     "fluent-ffmpeg": "^2.1.2",
     "libsodium-wrappers": "^0.7.13",
+    "react-router-dom": "^6.23.1",
+    "react-spinners": "^0.13.8",
     "ytdl-core": "^4.11.5"
   },
   "devDependencies": {
