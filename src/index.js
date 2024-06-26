@@ -5,7 +5,21 @@ const { Player, QueryType, QueueRepeatMode } = require("discord-player");
 const { EmbedMessage } = require('./embed.js');
 const { Utility } = require('./utilities/utility.js');
 const { interactionCommands } = require('./commands.js');
+const { Server } = require("socket.io");
+const { channel } = require('diagnostics_channel');
+const { time } = require('console');
 
+const PORT = 3030;
+const io = new Server(PORT, {
+    cors: {
+        origin: "http://localhost:5173", // Replace with your frontend URL
+        methods: ["GET", "POST"],
+        allowedHeaders: "messages",
+        credentials: true
+    }
+});
+
+const socketMessages = [];
 
 const prisma = new PrismaClient();
 
@@ -67,7 +81,31 @@ player.events.on('playerError', (queue, error) => {
 
 client.on("messageCreate", async (message) => {
     if (message.author.bot || !message.guild) return;
-    console.log(`[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.content}`)
+    if (message.attachments.size > 0) {
+        console.log(`[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.attachments.first().url}`)
+        socketMessages.push({
+            timestamp: new Date().toLocaleString(),
+            guild: message.guild.name,
+            channel: message.channel.name,
+            author: message.author.username,
+            content: message.attachments.first().url,
+            contentType: 'image'
+        });
+        io.emit('message', socketMessages);
+    }
+    else {
+        console.log(`[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.content}`)
+        socketMessages.push({
+            timestamp: new Date().toLocaleString(),
+            guild: message.guild.name,
+            channel: message.channel.name,
+            author: message.author.username,
+            content: message.content,
+            contentType: 'text'
+        });
+        io.emit('message', socketMessages);
+    }
+    
     if (!client.application?.owner) await client.application?.fetch();
 
     if (message.content === "!deploy") {
@@ -79,6 +117,15 @@ client.on("messageCreate", async (message) => {
 client.on("interactionCreate", async (interaction) => {
     if (interaction.isButton()) {
         console.log(`[${interaction.guild.name} (${interaction.channel.name})] : [${interaction.user.username}] => ${interaction.customId}`);
+        socketMessages.push({
+            timestamp: new Date().toLocaleString(),
+            guild: interaction.guild.name,
+            channel: interaction.channel.name,
+            author: interaction.user.username,
+            content: interaction.customId,
+            contentType: 'interaction'
+        });
+        io.emit('message', socketMessages);
         if (interaction.customId === 'next') {
             const queue = player.nodes.get(interaction.guildId);
             if (!queue) return void interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
@@ -212,6 +259,15 @@ client.on("interactionCreate", async (interaction) => {
 
     await player.extractors.loadDefault();
     console.log(`[${interaction.guild.name} (${interaction.channel.name})] : [${interaction.user.username}] => ${interaction}`);
+    socketMessages.push({
+        timestamp: new Date().toLocaleString(),
+        guild: interaction.guild.name,
+        channel: interaction.channel.name,
+        author: interaction.user.username,
+        content: interaction.toString(),
+        contentType: 'interaction'
+    });
+    io.emit('message', socketMessages);
     if (interaction.commandName === "play" || interaction.commandName === "p") {
         await interaction.deferReply();
         

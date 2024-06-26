@@ -91,7 +91,7 @@ const Home = () => {
   },[])
 
   return (
-    <main className="bg-background min-h-screen w-screen font-sans">
+    <main className="bg-background min-h-screen w-screen font-sans flex flex-col">
       
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" />
@@ -101,19 +101,19 @@ const Home = () => {
           <ScaleLoader loading={loading} color="white" margin={5} height={35}/>
         </div>
       )}
-      <div className="flex">
-        <Navbar />
-        <div>
-          <div className="m-4">
+      <div className="flex flex-grow">
+        <Navbar active="home"/>
+        <div className="ml-64">
+          <div className="m-5">
             <div className="text-lg text-txt font-semibold">Server Joined : {guilds.length}</div>
           </div>
           <div className="flex flex-wrap">
-            {bot?.botGuild?.map((guild: any) => (
-              <button className="text-txt bg-secondary p-4 ml-6 my-3 rounded-xl border border-third">
+            {bot?.botGuild?.map((guild: any, index: number) => (
+              <button key={index} className="text-txt bg-secondary p-4 ml-6 my-3 rounded-xl border border-third hover:opacity-75">
                 <div className="pb-1 text-lg font-semibold">{guild.guild_name}</div>
                 <div className="pb-1">{guild.join_date}</div>
                 <div className="pb-2">Member count : {guild.guild_members_count}</div>
-                <img src={guild.guild_icon} alt="Guild Icon" className="w-[12rem] h-[12rem] rounded"/>
+                <img src={guild.guild_icon} alt="Guild Icon" className="w-[12rem] h-[12rem] rounded-md"/>
               </button>
             ))}
             

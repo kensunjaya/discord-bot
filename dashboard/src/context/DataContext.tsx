@@ -4,6 +4,7 @@ interface DataContextType {
   bot: boolean;
   setBotProfile: Function;
   setBotGuild: Function;
+  setMessages: Function;
   botProfile: {
     id : string
     username : string
@@ -13,6 +14,7 @@ interface DataContextType {
     online : boolean
   } | null;
   botGuild: any | null;
+  messages: any | null;
 }
 
 

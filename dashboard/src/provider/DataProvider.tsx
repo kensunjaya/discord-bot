@@ -8,8 +8,9 @@ interface DataProviderProps {
 
 export const DataProvider: React.FC<DataProviderProps> = ({ children }) => {
   const [bot, setBot] = useState(true);
+  const [messages, setMessages] = useState([]);
   const [botProfile, setBotProfile] = useState(null);
   const [botGuild, setBotGuild] = useState(null);
 
-  return <DataContext.Provider value={{bot, botProfile, setBotProfile, botGuild, setBotGuild}}>{children}</DataContext.Provider>;
+  return <DataContext.Provider value={{bot, botProfile, setBotProfile, botGuild, setBotGuild, messages, setMessages}}>{children}</DataContext.Provider>;
 };
