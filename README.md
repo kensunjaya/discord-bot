@@ -26,7 +26,7 @@ Alternatively, run `run.bat` if you're on windows
 The following command is used to run dashboard webserver
 ```bash
 cd dashboard
-npm run start
+npm run dev
 ```
 If you encounter "Error: Used disallowed intents":
 <br>
@@ -35,3 +35,9 @@ If you encounter "Error: Used disallowed intents":
 <ul>3. Scroll to bottom and find Privileged Gateway Intents</ul>
 <ul>4. Enable all Intents</ul>
 
+## Libraries & Frameworks used:
+<br />
+<img src="https://discord.js.org/static/logo.svg" alt="discord js logo" width=40% height=40% />
+<img src="https://www.vectorlogo.zone/logos/socketio/socketio-ar21.svg" alt="SocketIO logo" width=40% height=40% />
+<img src="https://miro.medium.com/v2/resize:fit:800/0*CBjisl422hUyLxiG.png" alt="React logo" width="40%" height="40%"/>
+<img src="https://cdn.worldvectorlogo.com/logos/prisma-2.svg" alt="Prisma logo" width="40%" height="40%"/>
