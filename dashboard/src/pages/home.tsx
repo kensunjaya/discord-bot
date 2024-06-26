@@ -25,6 +25,7 @@ interface Profile {
 
 const Home = () => {
   const bot = useContext(DataContext);
+  
   const [guilds, setGuilds] = useState<Guild[]>([]);
   const [profile, setProfile] = useState<Profile>();
   const [loading, setLoading] = useState(false);

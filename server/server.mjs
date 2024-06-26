@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors'
-import { client } from '../src/index.js';
+import { client, socketMessages } from '../src/index.js';
 
 const app = express();
 
@@ -59,6 +59,10 @@ app.get('/guilds', async (req, res) => {
     };
   });
   res.status(200).json(guilds);
+})
+
+app.get('/messages', async (req, res) => {
+  res.json(socketMessages);
 })
 
 app.get('/bot', async (req, res) => {

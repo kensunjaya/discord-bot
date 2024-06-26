@@ -89,6 +89,7 @@ client.on("messageCreate", async (message) => {
             channel: message.channel.name,
             author: message.author.username,
             content: message.attachments.first().url,
+            alt: message.attachments.first().name,
             contentType: 'image'
         });
         io.emit('message', socketMessages);
@@ -500,6 +501,6 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
-module.exports = { client };
+module.exports = { client, socketMessages };
 client.login(process.env.TOKEN);
 

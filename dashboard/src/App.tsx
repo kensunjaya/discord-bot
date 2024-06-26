@@ -6,6 +6,8 @@ import { ScaleLoader } from 'react-spinners'
 import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
 import Home from './pages/home';
 import Messages from './pages/messages';
+import Statistics from './pages/statistics';
+import People from './pages/people';
 
 const App = () => {
   return (
@@ -18,6 +20,8 @@ const App = () => {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/messages" element={<Messages />} />
+          <Route path="/statistics" element={<Statistics />} />
+          <Route path="/people" element={<People />} />
         </Routes>
       </Router>
     </main>

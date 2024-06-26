@@ -30,6 +30,8 @@ const Navbar = ({active} : {active: string}) => {
       </div>
       <button onClick={() => handleClick("/")} className={`${active === "home" ? "bg-third" : "bg-transparent"} mt-5 rounded-none w-full border-y-third`}>Dashboard</button>
       <button onClick={() => handleClick("/messages")} className={`${active === "messages" ? "bg-third" : "bg-transparent"} rounded-none w-full border-b-third`}>Messages</button>
+      <button onClick={() => handleClick("/statistics")} className={`${active === "statistics" ? "bg-third" : "bg-transparent"} rounded-none w-full border-b-third`}>Statistics</button>
+      <button onClick={() => handleClick("/people")} className={`${active === "people" ? "bg-third" : "bg-transparent"} rounded-none w-full border-b-third`}>People</button>
       <button className={`${active === "player" ? "bg-third" : "bg-transparent"} rounded-none w-full border-b-third`}>Active Players</button>
     </nav>
   );
