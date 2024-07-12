@@ -6,8 +6,8 @@ const { EmbedMessage } = require('./embed.js');
 const { Utility } = require('./utilities/utility.js');
 const { interactionCommands } = require('./commands.js');
 const { Server } = require("socket.io");
-const { channel } = require('diagnostics_channel');
-const { time } = require('console');
+const { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-youtubei")
+const { SpotifyExtractor, SoundCloudExtractor } = require("@discord-player/extractor");
 
 const PORT = 3030;
 const io = new Server(PORT, {
@@ -53,11 +53,16 @@ client.on('unhandledRejection', (err) => {
 
 player.events.on("playerStart", async (queue, track) => {
     if (guildHandler.get(queue.guild)) {
-        if (guildHandler.get(queue.guild).commandName === 'play' && !queue.tracks.data.length) {
-            await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
+        try {
+            if (guildHandler.get(queue.guild).commandName === 'play' && !queue.tracks.data.length) {
+                await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
+            }
+            else {
+                await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
+            }
         }
-        else {
-            await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
+        catch (error) {
+            console.log(error);
         }
         // guildHandler.set(queue.guild, newInteraction);
     }
@@ -258,7 +263,14 @@ client.on("interactionCreate", async (interaction) => {
         return void interaction.reply({ content: "You are not in a voice channel!", ephemeral: true });
     }
 
-    await player.extractors.loadDefault();
+    // await player.extractors.loadDefault((ext) => ext !== 'YouTubeExtractor');
+    // console.log(player.extractors)
+    await player.extractors.register(YoutubeiExtractor, {});
+    await player.extractors.register(SpotifyExtractor, {
+        createStream: createYoutubeiStream
+    })
+    await player.extractors.register(SoundCloudExtractor, {});
+
     console.log(`[${interaction.guild.name} (${interaction.channel.name})] : [${interaction.user.username}] => ${interaction}`);
     socketMessages.push({
         timestamp: new Date().toLocaleString(),
@@ -280,7 +292,9 @@ client.on("interactionCreate", async (interaction) => {
                 requestedBy: interaction.user,
                 searchEngine: search_engine ? search_engine.value : QueryType.AUTO,
             })
-            .catch(() => {});
+            .catch((error) => {
+                console.log(error);
+            });
 
         if (!searchResult || !searchResult.tracks.length) {
             if (search_engine && search_engine.type != 3) return void interaction.followUp({ content: "No results were found!" });
@@ -311,6 +325,7 @@ client.on("interactionCreate", async (interaction) => {
             leaveOnEmpty: false,
             leaveOnEnd: false,
             selfDeaf: true,
+            volume: 100,
         });
         
         try {
