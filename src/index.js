@@ -54,12 +54,14 @@ client.on('unhandledRejection', (err) => {
 player.events.on("playerStart", async (queue, track) => {
     if (guildHandler.get(queue.guild)) {
         try {
-            if (guildHandler.get(queue.guild).commandName === 'play' && !queue.tracks.data.length) {
+            if ((guildHandler.get(queue.guild).commandName === 'play' || guildHandler.get(queue.guild).commandName === 'p') && (track.source === 'youtube' ? !(queue.tracks.data.length-1) : !queue.tracks.data.length)) {
+                console.log("Playing the first track");
                 await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
             }
             else {
                 await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
             }
+            
         }
         catch (error) {
             console.log(error);
@@ -202,7 +204,7 @@ client.on("interactionCreate", async (interaction) => {
                 const queue = player.nodes.get(interaction.guildId);
                 if (!queue || !queue.isPlaying()) return;
                 if (!queue.tracks.data.length) {
-                    await interaction.channel.send({ embeds: [Embed.alert('⏹️  Stopped the player due to empty queue', 0xDEB600)] });
+                    await interaction.channel.send({ embeds: [Embed.alert('⏹️  Player closed due to empty queue', 0xDEB600)] });
                     await interaction.deferUpdate();
                     return void queue.delete();
                 }
@@ -349,9 +351,9 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         if (!queue.isPlaying()) {
+            guildHandler.set(interaction.guild, interaction);
             await queue.node.play(queue.tracks.data[0]);
             // await interaction.followUp({embeds : [Embed.musicPlaying(queue.currentTrack)]});
-            guildHandler.set(interaction.guild, interaction);
             queue.removeTrack(queue.tracks.data[0]);
             return;
         }
@@ -370,7 +372,7 @@ client.on("interactionCreate", async (interaction) => {
             }
             await interaction.deferReply();
             if (!queue.tracks.data.length) {
-                await interaction.followUp({ embeds: [Embed.alert('⏹️  Stopped the player due to empty queue', 0xDEB600)] });
+                await interaction.followUp({ embeds: [Embed.alert('⏹️  Player closed due to empty queue', 0xDEB600)] });
                 return void queue.delete();
             }
             
@@ -415,7 +417,7 @@ client.on("interactionCreate", async (interaction) => {
         
         queue.delete();
         await interaction.deferReply();
-        return void interaction.followUp({ content: "⏹️  Stopped the player!" });
+        return void interaction.followUp({ content: "⏹️  Player stopped!" });
     } 
 
     else if (interaction.commandName === "queue") {
@@ -505,7 +507,7 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.deferReply();
         queue.tracks.shuffle();
         return void interaction.followUp({
-            embeds: queue.tracks.data ? [Embed.alert(`Tracks has been shuffled!`, 0x73C6B6)] : [Embed.alert('Cannot shuffle tracks')]
+            embeds: queue.tracks.data ? [Embed.alert(`Shuffled the playlist!`, 0x73C6B6)] : [Embed.alert('Cannot shuffle the current playlist')]
         });
     }
     else {
