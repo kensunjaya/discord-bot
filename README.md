@@ -12,8 +12,7 @@ ADMIN_ROLE_ID = YOUR DISCORD ID
 
 ## Install all depedencies
 ```bash
-npm i
-npm install -g nodemon
+npm install
 ```
 
 The following command is used to run the bot
@@ -26,8 +25,11 @@ Alternatively, run `run.bat` if you're on windows
 The following command is used to run dashboard webserver
 ```bash
 cd dashboard
+npm install
 npm run dev
 ```
+The `npm install` command is necessary when running the bot and the dashboard for the first time
+
 If you encounter "Error: Used disallowed intents":
 <br>
 <ul>1. Navigate to Discord Development Portal</ul>
