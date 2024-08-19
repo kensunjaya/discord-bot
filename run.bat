@@ -1,4 +1,6 @@
 @echo off
+
+:restart
 call npx npm-check-updates -u
 if %errorlevel% neq 0 (
     echo npm-check-updates failed
@@ -8,9 +10,9 @@ if %errorlevel% neq 0 (
 
 node server\server.mjs
 if %errorlevel% neq 0 (
-    echo Server failed to start
-    pause
-    exit /b %errorlevel%
+    echo Server crashed. Restarting...
+    timeout /t 5 /nobreak
+    goto restart
 )
 
 pause

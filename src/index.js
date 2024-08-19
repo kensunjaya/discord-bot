@@ -53,20 +53,23 @@ client.on('unhandledRejection', (err) => {
 
 player.events.on("playerStart", async (queue, track) => {
     if (guildHandler.get(queue.guild)) {
-        try {
-            if ((guildHandler.get(queue.guild).commandName === 'play' || guildHandler.get(queue.guild).commandName === 'p') && (track.source === 'youtube' ? !(queue.tracks.data.length-1) : !queue.tracks.data.length)) {
-                console.log("Playing the first track");
-                await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
-            }
-            else {
-                await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
-            }
+        // try {
+        //     if ((guildHandler.get(queue.guild).commandName === 'play' || guildHandler.get(queue.guild).commandName === 'p') && (track.source === 'youtube' ? !(queue.tracks.data.length-1) : !queue.tracks.data.length)) {
+        //         console.log("Playing the first track");
+        //         await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
+        //     }
+        //     else {
+        //         await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
+        //     }
             
+        // }
+        try {
+            await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
         }
         catch (error) {
-            console.log(error);
+            console.log("Failed to follow up");
+            await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
         }
-        // guildHandler.set(queue.guild, newInteraction);
     }
 });
 
@@ -267,7 +270,13 @@ client.on("interactionCreate", async (interaction) => {
 
     // await player.extractors.loadDefault((ext) => ext !== 'YouTubeExtractor');
     // console.log(player.extractors)
-    await player.extractors.register(YoutubeiExtractor, {});
+
+    await player.extractors.register(YoutubeiExtractor, {
+        streamOptions: {
+            useClient: "ANDROID"
+        },
+        overrideBridgeMode: 'ytmusic',
+    });
     await player.extractors.register(SpotifyExtractor, {
         createStream: createYoutubeiStream
     })
@@ -308,11 +317,11 @@ client.on("interactionCreate", async (interaction) => {
                 availableEngines.push(QueryType.YOUTUBE_PLAYLIST);
                 availableEngines.push(QueryType.SOUNDCLOUD);
             }
-            for (let i=0;i<availableEngines.length;i++) {
+            for (const element of availableEngines) {
                 searchResult = await player
                 .search(query, {
                     requestedBy: interaction.user,
-                    searchEngine: availableEngines[i]
+                    searchEngine: element
                 })
                 .catch(() => {});
                 if (searchResult) break;
@@ -336,8 +345,6 @@ client.on("interactionCreate", async (interaction) => {
             void player.deleteQueue(interaction.guildId);
             return void interaction.followUp({ content: "Could not join your voice channel!" });
         }
-
-        // searchResult.playlist.tracks = shuffle(searchResult.playlist.tracks);
 
         if (searchResult.playlist) {
             searchResult.playlist.tracks.map(track => {
