@@ -10,6 +10,7 @@ const { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-yout
 const { SpotifyExtractor, SoundCloudExtractor } = require("@discord-player/extractor");
 
 const PORT = 3030;
+let playerFollowedUp = true;
 const io = new Server(PORT, {
     cors: {
         origin: "http://localhost:5173", // Replace with your frontend URL
@@ -53,21 +54,22 @@ client.on('unhandledRejection', (err) => {
 
 player.events.on("playerStart", async (queue, track) => {
     if (guildHandler.get(queue.guild)) {
-        // try {
-        //     if ((guildHandler.get(queue.guild).commandName === 'play' || guildHandler.get(queue.guild).commandName === 'p') && (track.source === 'youtube' ? !(queue.tracks.data.length-1) : !queue.tracks.data.length)) {
-        //         console.log("Playing the first track");
-        //         await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
-        //     }
-        //     else {
-        //         await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
-        //     }
-            
-        // }
         try {
-            await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
+            if (track.url === process.env.INTRO_URL) {
+                await guildHandler.get(queue.guild).followUp({embeds : [Embed.playerInitiallyStarted()]});
+                playerFollowedUp = true;
+                return;
+            }
+            if (!playerFollowedUp) {
+                await guildHandler.get(queue.guild).followUp({embeds : [Embed.musicPlaying(track)]});
+                playerFollowedUp = true;
+                return;
+            }
+            await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
         }
         catch (error) {
             console.log("Failed to follow up");
+            await guildHandler.get(queue.guild).channel.deferReply();
             await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
         }
     }
@@ -298,14 +300,36 @@ client.on("interactionCreate", async (interaction) => {
         const query = interaction.options.get("query").value;
         const search_engine = interaction.options.get("search_engine");
 
-        let searchResult = await player
-            .search(query, {
+        const queue = player.nodes.create(interaction.guild, {
+            metadata: interaction.channel,
+            leaveOnEmpty: false,
+            leaveOnEnd: false,
+            selfDeaf: true,
+            volume: 100,
+        });
+
+        if (!queue.isPlaying() && !guildHandler.get(queue.guild)) {
+            guildHandler.set(interaction.guild, interaction);
+            const intro = await player
+            .search(process.env.INTRO_URL, {
                 requestedBy: interaction.user,
-                searchEngine: search_engine ? search_engine.value : QueryType.AUTO,
+                searchEngine: QueryType.YOUTUBE,
             })
             .catch((error) => {
                 console.log(error);
+            }).then(async (result) => {
+                queue.addTrack(result.tracks[0]);
             });
+        }
+
+        let searchResult = await player
+        .search(query, {
+            requestedBy: interaction.user,
+            searchEngine: search_engine ? search_engine.value : QueryType.AUTO,
+        })
+        .catch((error) => {
+            console.log(error);
+        });
 
         if (!searchResult || !searchResult.tracks.length) {
             if (search_engine && search_engine.type != 3) return void interaction.followUp({ content: "No results were found!" });
@@ -331,13 +355,8 @@ client.on("interactionCreate", async (interaction) => {
             }
         }
 
-        const queue = player.nodes.create(interaction.guild, {
-            metadata: interaction.channel,
-            leaveOnEmpty: false,
-            leaveOnEnd: false,
-            selfDeaf: true,
-            volume: 100,
-        });
+        playerFollowedUp = false;
+
         
         try {
             if (!queue.connection) await queue.connect(interaction.member.voice.channel);
@@ -358,7 +377,6 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         if (!queue.isPlaying()) {
-            guildHandler.set(interaction.guild, interaction);
             await queue.node.play(queue.tracks.data[0]);
             // await interaction.followUp({embeds : [Embed.musicPlaying(queue.currentTrack)]});
             queue.removeTrack(queue.tracks.data[0]);
@@ -384,9 +402,7 @@ client.on("interactionCreate", async (interaction) => {
             }
             
             const success = queue.node.skipTo(queue.tracks.data[0]);
-            // await queue.node.play(queue.tracks.data[0]);
-            // const currentTrack = queue.tracks.data[0];
-            // const success = queue.removeTrack(currentTrack);
+
             
             return void await interaction.followUp({
                 embeds: success ? [Embed.alert(`Skipped track to **${queue.tracks.data[0].description}**`, 0x85C1E9)] : [Embed.alert("Something went wrong while we were trying to skip the current track. Try again later")]
@@ -527,4 +543,3 @@ client.on("interactionCreate", async (interaction) => {
 
 module.exports = { client, socketMessages };
 client.login(process.env.TOKEN);
-

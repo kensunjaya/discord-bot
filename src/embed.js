@@ -22,6 +22,13 @@ class EmbedMessage {
         .addFields({ name : 'Source', value : `\`${obj.source.charAt(0).toUpperCase() + obj.source.slice(1)}\``, inline : true })
         .setThumbnail(`${obj.thumbnail}`)
     }
+
+    playerInitiallyStarted(obj, color=0x85C1E9) {
+        return new EmbedBuilder()
+        .setColor(color)
+        .setDescription(`Thank you for calling me! Enjoy some music!`);
+    }
+
     alert(obj, color=0xF6546A) {
         return new EmbedBuilder()
         .setColor(color)
