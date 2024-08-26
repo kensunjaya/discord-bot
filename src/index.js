@@ -65,11 +65,12 @@ player.events.on("playerStart", async (queue, track) => {
                 playerFollowedUp = true;
                 return;
             }
+            // await guildHandler.get(queue.guild).deferReply();
             await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
         }
         catch (error) {
             console.log("Failed to follow up");
-            await guildHandler.get(queue.guild).channel.deferReply();
+            // await guildHandler.get(queue.guild).deferReply();
             await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
         }
     }
@@ -296,7 +297,6 @@ client.on("interactionCreate", async (interaction) => {
     io.emit('message', socketMessages);
     if (interaction.commandName === "play" || interaction.commandName === "p") {
         await interaction.deferReply();
-        
         const query = interaction.options.get("query").value;
         const search_engine = interaction.options.get("search_engine");
 
@@ -308,9 +308,9 @@ client.on("interactionCreate", async (interaction) => {
             volume: 100,
         });
 
-        if (!queue.isPlaying() && !guildHandler.get(queue.guild)) {
+        if (!queue.isPlaying() && !queue.connection) {
             guildHandler.set(interaction.guild, interaction);
-            const intro = await player
+            await player
             .search(process.env.INTRO_URL, {
                 requestedBy: interaction.user,
                 searchEngine: QueryType.YOUTUBE,
@@ -332,7 +332,9 @@ client.on("interactionCreate", async (interaction) => {
         });
 
         if (!searchResult || !searchResult.tracks.length) {
-            if (search_engine && search_engine.type != 3) return void interaction.followUp({ content: "No results were found!" });
+            if (search_engine && search_engine.type != 3) {
+                await interaction.followUp({ content: "No results were found!" });
+            }
             const availableEngines = [QueryType.SPOTIFY_PLAYLIST,
                 QueryType.SPOTIFY_ALBUM,
                 QueryType.SPOTIFY_SONG]
@@ -351,10 +353,10 @@ client.on("interactionCreate", async (interaction) => {
                 if (searchResult) break;
             }
             if (!searchResult || !searchResult.tracks.length) {
-                return void interaction.followUp({ content: "No results were found!" });
+                await interaction.followUp({ content: "No results were found!" });
             }
         }
-
+        guildHandler.set(interaction.guild, interaction);
         playerFollowedUp = false;
 
         
