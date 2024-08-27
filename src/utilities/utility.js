@@ -62,7 +62,7 @@ class Utility {
     }
 
     constructQueue = (queue, page=1) => {
-        let queueBuilder = '```json\n' + `IN QUEUE - [${queue.tracks.data.length} Tracks]\n\n`;
+        let queueBuilder = '```wasm\n' + `IN QUEUE - [${queue.tracks.data.length} Tracks]\n\n`;
         queueBuilder += `► Now playing ${queue.currentTrack.description}\n`
         let tempQueue = '';
         let estDuration = queue.currentTrack.durationMS;

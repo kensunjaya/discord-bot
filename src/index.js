@@ -475,11 +475,13 @@ client.on("interactionCreate", async (interaction) => {
             if (!first.syncedLyrics) {
                 return await interaction.reply({ embeds: "```" + first.plainLyrics + "```" });
             }
+
             
             const syncedLyrics = queue.syncedLyrics(first);
-    
-            let lyricsBuilder = "```yaml\n";
-    
+            
+            let lyricsBuilder = "```md\n";
+            await interaction.reply({ content: "```make\nLive lyrics is now enabled. Keep in mind that the generated lyrics might not be 100% accurate as this feature is still in early development```" });
+            
             syncedLyrics.onChange(async (lyrics, timestamp) => {
                 // timestamp = timestamp in lyrics (not queue's time)
                 // lyrics = line in that timestamp
@@ -491,7 +493,7 @@ client.on("interactionCreate", async (interaction) => {
                     });
                 }
                 else {
-                    lyricsBuilder = "```yaml\n";
+                    lyricsBuilder = "```md\n";
                     lyricsBuilder += `[${Math.round(timestamp / queue.currentTrack.durationMS * 100)}%]: ${lyrics}\n`;
                     await interaction.editReply({
                         content: lyricsBuilder + "```"
@@ -500,7 +502,7 @@ client.on("interactionCreate", async (interaction) => {
             });
     
             syncedLyrics.subscribe();
-            await interaction.reply({ content: "```yaml\nLive lyrics is now enabled```" });
+            
 
         } catch (error) {
             console.log(error);
