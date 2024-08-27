@@ -22,7 +22,6 @@ const io = new Server(PORT, {
 });
 
 const socketMessages = [];
-let currentTrackTimestamp = 0;
 
 const prisma = new PrismaClient();
 
@@ -271,19 +270,20 @@ client.on("interactionCreate", async (interaction) => {
         return void interaction.reply({ content: "You are not in a voice channel!", ephemeral: true });
     }
 
+    await player.extractors.register(SpotifyExtractor, {
+        createStream: createYoutubeiStream,
+    })
     await player.extractors.register(YoutubeiExtractor, {
         streamOptions: {
             useClient: 'ANDROID',
-            highWaterMark: 1 << 25,
         },
         overrideBridgeMode: 'ytmusic',
     });
-    await player.extractors.register(SpotifyExtractor, {
-        createStream: createYoutubeiStream
-    })
     await player.extractors.register(SoundCloudExtractor, {});
 
+
     console.log(`[${interaction.guild.name} (${interaction.channel.name})] : [${interaction.user.username}] => ${interaction}`);
+
     socketMessages.push({
         timestamp: new Date().toLocaleString(),
         guild: interaction.guild.name,
@@ -293,10 +293,6 @@ client.on("interactionCreate", async (interaction) => {
         contentType: 'interaction'
     });
     io.emit('message', socketMessages);
-
-    function wordTokenize(text) {
-        return text.match(/\b\w+\b/g) || [];
-    }
 
     if (interaction.commandName === "play" || interaction.commandName === "p") {
         await interaction.deferReply();
@@ -373,7 +369,6 @@ client.on("interactionCreate", async (interaction) => {
                     if (similarity >= 0.25) break;
                 }
                 if (similarity < 0.05) {
-                    console.log(searchResult.tracks[0].cleanTitle);
                     const lyrics = await player.lyrics.search({
                         q: searchResult.tracks[0].cleanTitle
                     })
@@ -381,10 +376,9 @@ client.on("interactionCreate", async (interaction) => {
 
                     similarity = util.findSimilarity(query, lyrics[0].plainLyrics);
                     await interaction.followUp({
-                        embeds: [Embed.alert(`Your search for **"${query}"** didn't closely match any track titles, but I found a track whose lyrics may relate to your search: **"${searchResult.tracks[0].cleanTitle}"** **[${Math.round(similarity * 100)}%]**.`, 0xFFCC00)],
+                        embeds: [Embed.alert(`Your search for **"${query}"** didn't closely match any track titles, but I found a track whose lyrics may relate to your search: **"${searchResult.tracks[0].cleanTitle}"**.`, 0xFFCC00)],
                         ephemeral: true
                     });
-                    console.log("Low similarity, trying to find similarity with the lyrics: ", similarity);
                 }
                 else if (similarity < 0.25) {
                     await interaction.followUp({
@@ -459,50 +453,59 @@ client.on("interactionCreate", async (interaction) => {
 
     else if (interaction.commandName === "lyrics") {
         const queue = player.nodes.get(interaction.guildId);
+        if (queue.currentTrack.source !== "spotify") {
+            return await interaction.reply({ embeds: [Embed.alert("This command only works with Spotify tracks")] });
+        }
+
         if (!player.nodes.get(interaction.guildId) || !player.nodes.get(interaction.guildId).isPlaying()) {
             return await interaction.reply({ embeds: [Embed.alert("No music is being played!")] });
         }
-
         
-        const lyrics = await player.lyrics.search({
-            q: queue.currentTrack.description
-        });
-        if (!lyrics.length) {
-            return await interaction.reply({ embeds: [Embed.alert("No lyrics found for this track")] });
-        }
-
-        const first = lyrics[0];
-        if (!first.syncedLyrics) {
-            return await interaction.reply({ embeds: [Embed.alert("No lyrics found for this track")] });
-        }
-        await interaction.reply({content: "Enabled synced lyrics"})
-        const syncedLyrics = queue.syncedLyrics(first);
-
-        let lyricsBuilder = "```yaml\n";
-
-        syncedLyrics.onChange(async (lyrics, timestamp) => {
-            // timestamp = timestamp in lyrics (not queue's time)
-            // lyrics = line in that timestamp
-            console.log(timestamp, lyrics);
-            if (lyricsBuilder.length + lyrics.length < 1900) {
-                lyricsBuilder += `[${Math.round(timestamp / queue.currentTrack.durationMS * 100)}%]: ${lyrics}\n`;
-                await interaction.editReply({
-                    content: lyricsBuilder + "```"
-                });
+        try {
+            const lyrics = await player.lyrics.search({
+                q: queue.currentTrack.author + " " + queue.currentTrack.cleanTitle,
+                trackName: queue.currentTrack.cleanTitle,
+                artistName: queue.currentTrack.author,
+            });
+            if (!lyrics.length) {
+                return await interaction.reply({ embeds: [Embed.alert("No lyrics found for this track")] });
             }
-            else {
-                lyricsBuilder = "```yaml\n";
-                lyricsBuilder += `[${Math.round(timestamp / queue.currentTrack.durationMS * 100)}%]: ${lyrics}\n`;
-                await interaction.followUp({
-                    content: lyricsBuilder + "```"
-                });
+    
+            const first = lyrics[0];
+            if (!first.syncedLyrics) {
+                return await interaction.reply({ embeds: "```" + first.plainLyrics + "```" });
             }
-        });
+            
+            const syncedLyrics = queue.syncedLyrics(first);
+    
+            let lyricsBuilder = "```yaml\n";
+    
+            syncedLyrics.onChange(async (lyrics, timestamp) => {
+                // timestamp = timestamp in lyrics (not queue's time)
+                // lyrics = line in that timestamp
+                console.log(timestamp, lyrics);
+                if (lyricsBuilder.length + lyrics.length < 1900) {
+                    lyricsBuilder += `[${Math.round(timestamp / queue.currentTrack.durationMS * 100)}%]: ${lyrics}\n`;
+                    await interaction.editReply({
+                        content: lyricsBuilder + "```"
+                    });
+                }
+                else {
+                    lyricsBuilder = "```yaml\n";
+                    lyricsBuilder += `[${Math.round(timestamp / queue.currentTrack.durationMS * 100)}%]: ${lyrics}\n`;
+                    await interaction.editReply({
+                        content: lyricsBuilder + "```"
+                    });
+                }
+            });
+    
+            syncedLyrics.subscribe();
+            await interaction.reply({ content: "```yaml\nLive lyrics is now enabled```" });
 
-        const unsubscribe = syncedLyrics.subscribe();
-        // unsubscribe();
-
-        // return await interaction.reply({ content: "```" + lyrics[0].plainLyrics + "```" });
+        } catch (error) {
+            console.log(error);
+            return await interaction.reply({ embeds: [Embed.alert("Failed to fetch lyrics. Please try again later")] });
+        }
     }
 
 

@@ -59,12 +59,12 @@ interactionCommands = [
                 required: false,
                 choices: [
                     {
-                        name: "YouTube",
-                        value: QueryType.YOUTUBE
-                    },
-                    {
                         name: "Spotify",
                         value: QueryType.SPOTIFY_SEARCH
+                    },
+                    {
+                        name: "YouTube",
+                        value: QueryType.YOUTUBE
                     },
                     {
                         name: "Soundcloud",
