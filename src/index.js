@@ -22,6 +22,7 @@ const io = new Server(PORT, {
 });
 
 const socketMessages = [];
+let currentTrackTimestamp = 0;
 
 const prisma = new PrismaClient();
 
@@ -69,6 +70,7 @@ player.events.on('playerStart', async (queue, track) => {
             console.error("Failed to follow up interaction");
             await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
         }
+        currentTrackTimestamp = new Date().getTime();
     }
 });
 
@@ -376,7 +378,7 @@ client.on("interactionCreate", async (interaction) => {
                         q: searchResult.tracks[0].cleanTitle
                     })
                     if (!lyrics.length) return await interaction.followUp({embeds: [Embed.alert(`No close matches found for **"${query}"**. Please try refining your search.`)]});
-                    
+
                     similarity = util.findSimilarity(query, lyrics[0].plainLyrics);
                     await interaction.followUp({
                         embeds: [Embed.alert(`Your search for **"${query}"** didn't closely match any track titles, but I found a track whose lyrics may relate to your search: **"${searchResult.tracks[0].cleanTitle}"** **[${Math.round(similarity * 100)}%]**.`, 0xFFCC00)],
@@ -452,9 +454,58 @@ client.on("interactionCreate", async (interaction) => {
         catch (error) {
             console.log(error);
             return await interaction.reply(`Something went wrong: ${error.message}`);
-        }
-        
+        }  
     } 
+
+    else if (interaction.commandName === "lyrics") {
+        const queue = player.nodes.get(interaction.guildId);
+        if (!player.nodes.get(interaction.guildId) || !player.nodes.get(interaction.guildId).isPlaying()) {
+            return await interaction.reply({ embeds: [Embed.alert("No music is being played!")] });
+        }
+
+        
+        const lyrics = await player.lyrics.search({
+            q: queue.currentTrack.description
+        });
+        if (!lyrics.length) {
+            return await interaction.reply({ embeds: [Embed.alert("No lyrics found for this track")] });
+        }
+
+        const first = lyrics[0];
+        if (!first.syncedLyrics) {
+            return await interaction.reply({ embeds: [Embed.alert("No lyrics found for this track")] });
+        }
+        await interaction.reply({content: "Enabled synced lyrics"})
+        const syncedLyrics = queue.syncedLyrics(first);
+
+        let lyricsBuilder = "```yaml\n";
+
+        syncedLyrics.onChange(async (lyrics, timestamp) => {
+            // timestamp = timestamp in lyrics (not queue's time)
+            // lyrics = line in that timestamp
+            console.log(timestamp, lyrics);
+            if (lyricsBuilder.length + lyrics.length < 1900) {
+                lyricsBuilder += `[${Math.round(timestamp / queue.currentTrack.durationMS * 100)}%]: ${lyrics}\n`;
+                await interaction.editReply({
+                    content: lyricsBuilder + "```"
+                });
+            }
+            else {
+                lyricsBuilder = "```yaml\n";
+                lyricsBuilder += `[${Math.round(timestamp / queue.currentTrack.durationMS * 100)}%]: ${lyrics}\n`;
+                await interaction.followUp({
+                    content: lyricsBuilder + "```"
+                });
+            }
+        });
+
+        const unsubscribe = syncedLyrics.subscribe();
+        // unsubscribe();
+
+        // return await interaction.reply({ content: "```" + lyrics[0].plainLyrics + "```" });
+    }
+
+
     else if (interaction.commandName === "loop") {
         const queue = player.nodes.get(interaction.guildId);
         if (!queue || !queue.isPlaying()) {

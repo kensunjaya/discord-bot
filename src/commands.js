@@ -153,6 +153,10 @@ interactionCommands = [
         name: "ping",
         description : "Display network latency statistics"
     },
+    {
+        name: "lyrics",
+        description : "Get lyrics of the current track"
+    }
 ]
 
 module.exports = { interactionCommands }
