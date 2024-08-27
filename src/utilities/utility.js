@@ -15,6 +15,52 @@ class Utility {
         formatBuilder += (time.second.toString() + 's');
         return formatBuilder;
     };
+
+    wordTokenize(text) {
+        return text.match(/\b\w+\b/g) || [];
+    }
+
+    findSimilarity = (str1, str2) => {
+        str1 = str1.toLowerCase();
+        str2 = str2.toLowerCase();
+        const word = [str1, str2];
+        const d = [];
+        let max = 0;
+
+        for (let i = 0; i < word.length; i++) {
+            d.push({});
+            const tokens = this.wordTokenize(word[i]);
+            for (const j of tokens) {
+                if (d[i][j]) {
+                    d[i][j] += 1;
+                } else {
+                    d[i][j] = 1;
+                }
+            }
+            if (Object.keys(d[i]).length > max) {
+                max = Object.keys(d[i]).length;
+            }
+        }
+
+        let a = 0;
+        for (const i in d[0]) {
+            if (d[1][i]) {
+                a += d[0][i] * d[1][i];
+            }
+        }
+
+        let b = 1;
+        for (const i of d) {
+            let temp = 0;
+            for (const j in i) {
+                temp += i[j] ** 2;
+            }
+            b *= Math.sqrt(temp);
+        }
+
+        return (a / b);
+    }
+
     constructQueue = (queue, page=1) => {
         let queueBuilder = '```json\n' + `IN QUEUE - [${queue.tracks.data.length} Tracks]\n\n`;
         queueBuilder += `► Now playing ${queue.currentTrack.description}\n`

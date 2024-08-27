@@ -152,7 +152,7 @@ interactionCommands = [
     {
         name: "ping",
         description : "Display network latency statistics"
-    }
+    },
 ]
 
 module.exports = { interactionCommands }

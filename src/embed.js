@@ -16,7 +16,7 @@ class EmbedMessage {
     musicPlaying(obj, color=0xD6F7FF) {
         return new EmbedBuilder()
         .setColor(color)
-        .addFields({name : 'Now Playing', value : `[${obj.title}](${obj.url})`, inline : false})
+        .addFields({name : 'Now Playing', value : `[${obj.cleanTitle}](<${obj.url}>)`, inline : false})
         .addFields({name : 'Duration', value : `\`${obj.duration}\``, inline : true})
         .addFields({name : 'Requester', value : `\`${obj.requestedBy.username}\``, inline : true})
         .addFields({ name : 'Source', value : `\`${obj.source.charAt(0).toUpperCase() + obj.source.slice(1)}\``, inline : true })
@@ -26,7 +26,7 @@ class EmbedMessage {
     playerInitiallyStarted(obj, color=0x85C1E9) {
         return new EmbedBuilder()
         .setColor(color)
-        .setDescription(`Thank you for calling me! Enjoy some music!`);
+        .setDescription('Enjoy the music! The track will be played shortly.');
     }
 
     alert(obj, color=0xF6546A) {
@@ -41,7 +41,7 @@ class EmbedMessage {
         .addFields({name : 'Music Player', value : '```/p``` ```/play``` ```/skip``` ```/jump``` ```/queue``` ```/stop``` ```/remove``` ```/pause``` ```/resume``` ```/loop```', inline : true})
         .addFields({name : 'Utility', value : '```/help``` ```/info``` ```/ping```', inline : true})
     }
-    addPlaylist(obj, username, color=0xCFC7D8) {
+    addPlaylist(obj, color=0xCFC7D8) {
         return new EmbedBuilder()
         .setColor(color)
         .addFields({name : `Added ${obj.tracks.length} tracks to queue`, value : `[${obj.title}](${obj.url})`, inline : false})

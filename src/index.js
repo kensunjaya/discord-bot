@@ -8,6 +8,7 @@ const { interactionCommands } = require('./commands.js');
 const { Server } = require("socket.io");
 const { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-youtubei")
 const { SpotifyExtractor, SoundCloudExtractor } = require("@discord-player/extractor");
+const e = require('cors');
 
 const PORT = 3030;
 let playerFollowedUp = true;
@@ -48,15 +49,12 @@ client.on('ready', (c) => {
     
 }) // access events, listens when our bot is ready
 
-client.on('unhandledRejection', (err) => {
-	console.error('[Rejection Occured]: ', err.message);
-}); // API error handling
 
-player.events.on("playerStart", async (queue, track) => {
+player.events.on('playerStart', async (queue, track) => {
     if (guildHandler.get(queue.guild)) {
         try {
             if (track.url === process.env.INTRO_URL) {
-                await guildHandler.get(queue.guild).followUp({embeds : [Embed.playerInitiallyStarted()]});
+                await guildHandler.get(queue.guild).followUp({embeds : [Embed.playerInitiallyStarted()], ephemeral : true});
                 playerFollowedUp = true;
                 return;
             }
@@ -65,16 +63,16 @@ player.events.on("playerStart", async (queue, track) => {
                 playerFollowedUp = true;
                 return;
             }
-            // await guildHandler.get(queue.guild).deferReply();
             await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
         }
         catch (error) {
-            console.log("Failed to follow up");
-            // await guildHandler.get(queue.guild).deferReply();
+            console.error("Failed to follow up interaction");
             await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
         }
     }
 });
+
+
 
 player.events.on('disconnect', (queue) => {
     guildHandler.delete(queue.guild);
@@ -271,12 +269,10 @@ client.on("interactionCreate", async (interaction) => {
         return void interaction.reply({ content: "You are not in a voice channel!", ephemeral: true });
     }
 
-    // await player.extractors.loadDefault((ext) => ext !== 'YouTubeExtractor');
-    // console.log(player.extractors)
-
     await player.extractors.register(YoutubeiExtractor, {
         streamOptions: {
-            useClient: "ANDROID"
+            useClient: 'ANDROID',
+            highWaterMark: 1 << 25,
         },
         overrideBridgeMode: 'ytmusic',
     });
@@ -295,6 +291,11 @@ client.on("interactionCreate", async (interaction) => {
         contentType: 'interaction'
     });
     io.emit('message', socketMessages);
+
+    function wordTokenize(text) {
+        return text.match(/\b\w+\b/g) || [];
+    }
+
     if (interaction.commandName === "play" || interaction.commandName === "p") {
         await interaction.deferReply();
         const query = interaction.options.get("query").value;
@@ -331,6 +332,8 @@ client.on("interactionCreate", async (interaction) => {
             console.log(error);
         });
 
+        let similarity = 0;
+
         if (!searchResult || !searchResult.tracks.length) {
             if (search_engine && search_engine.type != 3) {
                 await interaction.followUp({ content: "No results were found!" });
@@ -353,9 +356,44 @@ client.on("interactionCreate", async (interaction) => {
                 if (searchResult) break;
             }
             if (!searchResult || !searchResult.tracks.length) {
-                await interaction.followUp({ content: "No results were found!" });
+                return await interaction.followUp({ content: "No results were found!" });
             }
         }
+
+        if (searchResult) {
+            // Check for query and result similarity
+            similarity = util.findSimilarity(query, searchResult.tracks[0].url);
+            if (similarity < 0.8) {
+                let parameters = [searchResult.tracks[0].cleanTitle, searchResult.tracks[0].description];
+                for (const element of parameters) {
+                    const tempSimilarity = util.findSimilarity(query, element);
+                    if (tempSimilarity > similarity) similarity = tempSimilarity;
+                    if (similarity >= 0.25) break;
+                }
+                if (similarity < 0.05) {
+                    console.log(searchResult.tracks[0].cleanTitle);
+                    const lyrics = await player.lyrics.search({
+                        q: searchResult.tracks[0].cleanTitle
+                    })
+                    if (!lyrics.length) return await interaction.followUp({embeds: [Embed.alert(`No close matches found for **"${query}"**. Please try refining your search.`)]});
+                    
+                    similarity = util.findSimilarity(query, lyrics[0].plainLyrics);
+                    await interaction.followUp({
+                        embeds: [Embed.alert(`Your search for **"${query}"** didn't closely match any track titles, but I found a track whose lyrics may relate to your search: **"${searchResult.tracks[0].cleanTitle}"** **[${Math.round(similarity * 100)}%]**.`, 0xFFCC00)],
+                        ephemeral: true
+                    });
+                    console.log("Low similarity, trying to find similarity with the lyrics: ", similarity);
+                }
+                else if (similarity < 0.25) {
+                    await interaction.followUp({
+                        embeds: [Embed.alert(`Your search for "${query}" has a low similarity to any results. The closest match is **"${searchResult.tracks[0].cleanTitle}"** **[${Math.round(similarity*100)}%]**`, 0xFFCC00)],
+                        ephemeral: true
+                    });
+                }
+            }
+            console.log("Similarity:", similarity);
+        }
+
         guildHandler.set(interaction.guild, interaction);
         playerFollowedUp = false;
 
@@ -363,8 +401,8 @@ client.on("interactionCreate", async (interaction) => {
         try {
             if (!queue.connection) await queue.connect(interaction.member.voice.channel);
         } catch {
-            void player.deleteQueue(interaction.guildId);
-            return void interaction.followUp({ content: "Could not join your voice channel!" });
+            await player.deleteQueue(interaction.guildId);
+            return await interaction.followUp({ content: "Could not join your voice channel!" });
         }
 
         if (searchResult.playlist) {
@@ -382,11 +420,12 @@ client.on("interactionCreate", async (interaction) => {
             await queue.node.play(queue.tracks.data[0]);
             // await interaction.followUp({embeds : [Embed.musicPlaying(queue.currentTrack)]});
             queue.removeTrack(queue.tracks.data[0]);
+            
             return;
         }
 
         if (!searchResult.playlist) {
-            await interaction.followUp(`📝 | Added **${searchResult.tracks[0].description}** to queue list`);
+            await interaction.followUp(`📔 | Added [${searchResult.tracks[0].description}](<${searchResult.tracks[0].url}>) to queue **[${Math.round(similarity*100)}% match]**`);
         }
     } 
 
@@ -395,31 +434,31 @@ client.on("interactionCreate", async (interaction) => {
             const queue = player.nodes.get(interaction.guildId);
         
             if (!queue || !queue.isPlaying()) {
-                return void await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+                return await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
             }
             await interaction.deferReply();
             if (!queue.tracks.data.length) {
                 await interaction.followUp({ embeds: [Embed.alert('⏹️  Player closed due to empty queue', 0xDEB600)] });
-                return void queue.delete();
+                return queue.delete();
             }
             
             const success = queue.node.skipTo(queue.tracks.data[0]);
 
             
-            return void await interaction.followUp({
+            return await interaction.followUp({
                 embeds: success ? [Embed.alert(`Skipped track to **${queue.tracks.data[0].description}**`, 0x85C1E9)] : [Embed.alert("Something went wrong while we were trying to skip the current track. Try again later")]
             });
         }
         catch (error) {
             console.log(error);
-            return void await interaction.reply(`Something went wrong: ${error.message}`);
+            return await interaction.reply(`Something went wrong: ${error.message}`);
         }
         
     } 
     else if (interaction.commandName === "loop") {
         const queue = player.nodes.get(interaction.guildId);
         if (!queue || !queue.isPlaying()) {
-            return void await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+            return await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
         }
         await interaction.deferReply();
         const state = interaction.options.get("condition").value;
@@ -470,7 +509,7 @@ client.on("interactionCreate", async (interaction) => {
         const success = queue.removeTrack(trackToRemove);
         await interaction.deferReply();
         return void interaction.followUp({
-            embeds: success ? [Embed.alert(`Removed ${trackToRemove.title} from queue`, 0x6FA8DC)] : [Embed.alert(`Failed to remove ${trackToRemove.title} from queue`)]
+            embeds: success ? [Embed.alert(`Removed ${trackToRemove.cleanTitle} from queue`, 0x6FA8DC)] : [Embed.alert(`Failed to remove ${trackToRemove.cleanTitle} from queue`)]
         });
     } 
     else if (interaction.commandName === "pause") {

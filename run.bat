@@ -11,7 +11,7 @@ if %errorlevel% neq 0 (
 node server\server.mjs
 if %errorlevel% neq 0 (
     echo Server crashed. Restarting...
-    timeout /t 5 /nobreak
+    timeout /t 3 /nobreak
     goto restart
 )
 
