@@ -140,13 +140,13 @@ client.on("interactionCreate", async (interaction) => {
         io.emit('message', socketMessages);
         if (interaction.customId === 'next') {
             const queue = player.nodes.get(interaction.guildId);
-            if (!queue) return void interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
+            if (!queue) return await interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
             if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user) && (queueHandler.get(interaction.channel).get(interaction.user)[2] > new Date().getTime() - 600000)) {
                 let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
                 queueHandler.get(interaction.channel).set(interaction.user, [msg, ++page, queueHandler.get(interaction.channel).get(interaction.user)[2]]);
                 const [queueBuilder, row] = util.constructQueue(queue, page);
                 (await msg).edit({ content : queueBuilder, components : [row]});
-                return void await interaction.deferUpdate();
+                return await await interaction.deferUpdate();
             }
             const [queueBuilder, row] = util.constructQueue(queue);
             const msg = await interaction.reply({ content : queueBuilder, components : [row], ephemeral: true});
@@ -156,13 +156,13 @@ client.on("interactionCreate", async (interaction) => {
         }
         else if (interaction.customId === 'prev') {
             const queue = player.nodes.get(interaction.guildId);
-            if (!queue) return void interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
+            if (!queue) return await interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
             if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user) && (queueHandler.get(interaction.channel).get(interaction.user)[2] > new Date().getTime() - 600000)) {
                 let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
                 queueHandler.get(interaction.channel).set(interaction.user, [msg, --page, queueHandler.get(interaction.channel).get(interaction.user)[2]]);
                 const [queueBuilder, row] = util.constructQueue(queue, page);
                 (await msg).edit({ content : queueBuilder, components : [row]});
-                return void await interaction.deferUpdate();
+                return await await interaction.deferUpdate();
             }
             const [queueBuilder, row] = util.constructQueue(queue);
             const msg = await interaction.reply({ content : queueBuilder, components : [row], ephemeral: true});
@@ -177,7 +177,7 @@ client.on("interactionCreate", async (interaction) => {
                 let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
                 const [queueBuilder, row] = util.constructQueue(queue, page);
                 (await msg).edit({ content : queueBuilder, components : [row]});
-                return void await interaction.deferUpdate();
+                return await await interaction.deferUpdate();
             }
             const [queueBuilder, row] = util.constructQueue(queue);
             const msg = await interaction.channel.send({ content : queueBuilder, components : [row], ephemeral: true});
@@ -196,7 +196,7 @@ client.on("interactionCreate", async (interaction) => {
                     const [queueBuilder, row] = util.constructQueue(queue, page);
                     (await msg).edit({ content : queueBuilder, components : [row]});
                 }
-                return void await interaction.deferUpdate();
+                return await await interaction.deferUpdate();
             }
             const [queueBuilder, row] = util.constructQueue(queue);
             const msg = await interaction.channel.send({ content : queueBuilder, components : [row], ephemeral: true});
@@ -210,7 +210,7 @@ client.on("interactionCreate", async (interaction) => {
                 if (!queue.tracks.data.length) {
                     await interaction.channel.send({ embeds: [Embed.alert('⏹️  Player closed due to empty queue', 0xDEB600)] });
                     await interaction.deferUpdate();
-                    return void queue.delete();
+                    return await queue.delete();
                 }
                 queue.node.skipTo(queue.tracks.data[0]);
                 if (queueHandler.get(interaction.channel) && queueHandler.get(interaction.channel).get(interaction.user) && (queueHandler.get(interaction.channel).get(interaction.user)[2] > new Date().getTime() - 600000)) {
@@ -218,10 +218,10 @@ client.on("interactionCreate", async (interaction) => {
                         let [msg, page] = queueHandler.get(interaction.channel).get(interaction.user);
                         const [queueBuilder, row] = util.constructQueue(queue, page);
                         (await msg).edit({ content : queueBuilder, components : [row]});
-                        return void await interaction.deferUpdate();
+                        return await await interaction.deferUpdate();
                     }
                     catch (err) {
-                        return void console.log("Error : " + err);
+                        return await console.log("Error : " + err);
                     }
                 }
                 const [queueBuilder, row] = util.constructQueue(queue);
@@ -231,7 +231,7 @@ client.on("interactionCreate", async (interaction) => {
             }
             catch (error) {
                 console.log(error);
-                return void interaction.channel.send(`Something went wrong: ${error.message}`);
+                return await interaction.channel.send(`Something went wrong: ${error.message}`);
             }
             
         }
@@ -252,21 +252,21 @@ client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand() || !interaction.guildId) return;
 
     if (interaction.commandName === "ping") {
-        await interaction.deferReply();
+        await interaction.deferReply({ ephemeral: true });
         const reply = await interaction.fetchReply();
         const ping = reply.createdTimestamp - interaction.createdTimestamp;
-        return void interaction.followUp({content : `\`\`\`elm\nPong!\nUser's latency : ${ping} ms\nBot's latency  : ${client.ws.ping} ms\`\`\``});
+        return await interaction.followUp({content : `\`\`\`elm\nPong!\nUser's latency : ${ping} ms\nBot's latency  : ${client.ws.ping} ms\`\`\``});
     }
     else if (interaction.commandName === "help") {
-        return void interaction.reply({ embeds : [Embed.showCommands(interaction)], ephemeral : true });
+        return await interaction.reply({ embeds : [Embed.showCommands(interaction)], ephemeral : true });
     }
     else if (interaction.commandName === "info") {
         const [content, row] = Embed.info(interaction);
-        return void interaction.reply({ content : content, components : row ? [row] : null, ephemeral : true });
+        return await interaction.reply({ content : content, components : row ? [row] : null, ephemeral : true });
     }
 
     if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
-        return void interaction.reply({ content: "You are not in a voice channel!", ephemeral: true });
+        return await interaction.reply({ content: "You are not in a voice channel!", ephemeral: true });
     }
 
     await player.extractors.register(SpotifyExtractor, {
@@ -371,7 +371,7 @@ client.on("interactionCreate", async (interaction) => {
                     const lyrics = await player.lyrics.search({
                         q: searchResult.tracks[0].cleanTitle
                     })
-                    if (!lyrics.length) return await interaction.followUp({embeds: [Embed.alert(`No close matches found for **"${query}"**. Please try refining your search.`)]});
+                    if (!lyrics.length || !lyrics[0].plainLyrics) return await interaction.followUp({embeds: [Embed.alert(`No close matches found for **"${query}"**. Please try refining your search.`)]});
 
                     similarity = util.findSimilarity(query, lyrics[0].plainLyrics);
                     await interaction.followUp({
@@ -413,7 +413,6 @@ client.on("interactionCreate", async (interaction) => {
 
         if (!queue.isPlaying()) {
             await queue.node.play(queue.tracks.data[0]);
-            // await interaction.followUp({embeds : [Embed.musicPlaying(queue.currentTrack)]});
             queue.removeTrack(queue.tracks.data[0]);
             
             return;
@@ -531,18 +530,18 @@ client.on("interactionCreate", async (interaction) => {
         const queue = player.nodes.get(interaction.guildId);
 
         if (!queue || !queue.isPlaying()) {
-            return void interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true });
+            return await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true });
         }
         
         queue.delete();
         await interaction.deferReply();
-        return void interaction.followUp({ content: "⏹️  Player stopped!" });
+        return await interaction.followUp({ content: "⏹️  Player stopped!" });
     } 
 
     else if (interaction.commandName === "queue") {
         const queue = player.nodes.get(interaction.guildId);
 
-        if (!queue || !queue.isPlaying()) return void interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
+        if (!queue || !queue.isPlaying()) return await interaction.reply({ content : "Queue list is empty. Use /play to add some tracks", ephemeral: true });
         const [queueBuilder, row] = util.constructQueue(queue);
         
         const msg = await interaction.reply({ content : queueBuilder, components : [row], ephemeral: true});
@@ -555,51 +554,51 @@ client.on("interactionCreate", async (interaction) => {
         const index = interaction.options.get("index").value;
         const queue = player.nodes.get(interaction.guildId);
         if (!queue || !queue.isPlaying()) {
-            return void interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+            return await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
         }
         if (index < 1 || index > queue.tracks.data.length) {
-            return void interaction.reply({ embeds: [Embed.alert(`Index must be in between 1 to ${queue.tracks.data.length}`)] , ephemeral: true})
+            return await interaction.reply({ embeds: [Embed.alert(`Index must be in between 1 to ${queue.tracks.data.length}`)] , ephemeral: true})
         }
         const trackToRemove = queue.tracks.data[index-1]
         const success = queue.removeTrack(trackToRemove);
         await interaction.deferReply();
-        return void interaction.followUp({
+        return await interaction.followUp({
             embeds: success ? [Embed.alert(`Removed ${trackToRemove.cleanTitle} from queue`, 0x6FA8DC)] : [Embed.alert(`Failed to remove ${trackToRemove.cleanTitle} from queue`)]
         });
     } 
     else if (interaction.commandName === "pause") {
         const queue = player.nodes.get(interaction.guildId);
         if (!queue || !queue.isPlaying()) {
-            return void interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+            return await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
         }
         if (!queue.node.isPaused()) {
             const success = queue.node.pause();
             await interaction.deferReply();
-            return void interaction.followUp({embeds : success ? [Embed.alert('Track paused. Use **/resume** to resume', 0xF0B27A)] : [Embed.alert('Something went wrong while trying to pause the current track')]});
+            return await interaction.followUp({embeds : success ? [Embed.alert('Track paused. Use **/resume** to resume', 0xF0B27A)] : [Embed.alert('Something went wrong while trying to pause the current track')]});
         }
         
-        return void interaction.reply({content : 'Player is already paused. Use **/resume** to resume', ephemeral : true});
+        return await interaction.reply({content : 'Player is already paused. Use **/resume** to resume', ephemeral : true});
     }
     else if (interaction.commandName === "resume") {
         const queue = player.nodes.get(interaction.guildId);
         if (!queue || !queue.isPlaying()) {
-            return void interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+            return await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
         }
         if (!queue.node.isPaused()) {
-            return void interaction.reply({content : 'Player is currently not paused', ephemeral : true});   
+            return await interaction.reply({content : 'Player is currently not paused', ephemeral : true});   
         }
         await interaction.deferReply();
         const success = queue.node.resume();
-        return void interaction.followUp({embeds : success ? [Embed.alert('Track resumed playing',  0x73C6B6)] : [Embed.alert('Something went wrong while trying to resume the current track')]});
+        return await interaction.followUp({embeds : success ? [Embed.alert('Track resumed playing',  0x73C6B6)] : [Embed.alert('Something went wrong while trying to resume the current track')]});
     }
     else if (interaction.commandName === "jump") {
         const index = interaction.options.get("index").value;
         const queue = player.nodes.get(interaction.guildId);
         if (!queue || !queue.isPlaying()) {
-            return void interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+            return await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
         }
         if (index < 1 || index > queue.tracks.data.length) {
-            return void interaction.reply({ embeds: [Embed.alert(`Index must be in between 1 to ${queue.tracks.data.length}`)] , ephemeral: true})
+            return await interaction.reply({ embeds: [Embed.alert(`Index must be in between 1 to ${queue.tracks.data.length}`)] , ephemeral: true})
         }
         await interaction.deferReply();
         
@@ -607,30 +606,30 @@ client.on("interactionCreate", async (interaction) => {
             for (let i=0;i<index-1;i++) {
                 queue.addTrack(queue.tracks.data[0]);
                 if (!queue.removeTrack(queue.tracks.data[0])) {
-                    return void interaction.followUp({embed : [Embed.alert(`Something went wrong`)]});
+                    return await interaction.followUp({embed : [Embed.alert(`Something went wrong`)]});
                 }
             }
             queue.node.skipTo(queue.tracks.data[0]);
         }
         else queue.node.skipTo(queue.tracks.data[index-1]);
 
-        return void interaction.followUp({
+        return await interaction.followUp({
             embeds: [Embed.alert(`Skipped ${index-1} tracks`, 0x6FA8DC)]
         });
     }
     else if (interaction.commandName === "shuffle") {
         const queue = player.nodes.get(interaction.guildId);
         if (!queue || !queue.isPlaying()) {
-            return void interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
+            return await interaction.reply({ embeds: [Embed.alert('No music is being played!')] , ephemeral: true});
         }
         await interaction.deferReply();
         queue.tracks.shuffle();
-        return void interaction.followUp({
+        return await interaction.followUp({
             embeds: queue.tracks.data ? [Embed.alert(`Shuffled the playlist!`, 0x73C6B6)] : [Embed.alert('Cannot shuffle the current playlist')]
         });
     }
     else {
-        interaction.reply({
+        return await interaction.reply({
             content: "Unknown command!",
             ephemeral: true
         });
