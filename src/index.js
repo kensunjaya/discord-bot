@@ -69,7 +69,6 @@ player.events.on('playerStart', async (queue, track) => {
             console.error("Failed to follow up interaction");
             await guildHandler.get(queue.guild).channel.send({embeds : [Embed.musicPlaying(track)]});
         }
-        currentTrackTimestamp = new Date().getTime();
     }
 });
 
@@ -473,7 +472,7 @@ client.on("interactionCreate", async (interaction) => {
     
             const first = lyrics[0];
             if (!first.syncedLyrics) {
-                return await interaction.reply({ embeds: "```" + first.plainLyrics + "```" });
+                return await interaction.reply({ content: "```" + first.plainLyrics + "```" });
             }
 
             
