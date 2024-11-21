@@ -8,6 +8,7 @@ const { interactionCommands } = require('./commands.js');
 const { Server } = require("socket.io");
 const { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-youtubei")
 const { SpotifyExtractor, SoundCloudExtractor } = require("@discord-player/extractor");
+const { WordScramble } = require('./game.js');
 const e = require('cors');
 
 const PORT = 3030;
@@ -40,6 +41,7 @@ const util = new Utility();
 const Embed = new EmbedMessage();
 const guildHandler = new Map();
 const queueHandler = new Map();
+const wordScrambleChannels = new Map();
 
 client.on('ready', (c) => {
     console.log(`${c.user.tag} is online`);
@@ -116,6 +118,15 @@ client.on("messageCreate", async (message) => {
             contentType: 'text'
         });
         io.emit('message', socketMessages);
+        if (wordScrambleChannels.has(message.channel) && message.content === wordScrambleChannels.get(message.channel).getAnswer()) {
+            await message.reply({embeds : [Embed.correctAnswer(message.author, wordScrambleChannels.get(message.channel))]});
+            await util.getScrambledWord().then(word => {
+                wordScrambleChannels.get(message.channel).setQuestion(word.scrambled);
+                wordScrambleChannels.get(message.channel).setAnswer(word.answer);
+                wordScrambleChannels.get(message.channel).incrementQuestionNumber();
+                message.channel.send({ embeds : [Embed.wordScramble(word, wordScrambleChannels.get(message.channel).getQuestionNumber())]})
+            });
+        }
     }
     
     if (!client.application?.owner) await client.application?.fetch();
@@ -257,6 +268,35 @@ client.on("interactionCreate", async (interaction) => {
         const ping = reply.createdTimestamp - interaction.createdTimestamp;
         return await interaction.followUp({content : `\`\`\`elm\nPong!\nUser's latency : ${ping} ms\nBot's latency  : ${client.ws.ping} ms\`\`\``});
     }
+    else if (interaction.commandName === "ws") {
+        const state = interaction.options.get('condition').value;   
+        if (state === "start") {
+            if (wordScrambleChannels.has(interaction.channel)) {
+                await interaction.reply({ content: "A game is already running in this channel!", ephemeral: true });
+            }
+            else {
+                const ws = new WordScramble();
+                await util.getScrambledWord().then(word => {
+                    ws.setQuestion(word.scrambled);
+                    ws.setAnswer(word.answer);
+                    ws.incrementQuestionNumber();
+                    wordScrambleChannels.set(interaction.channel, ws);
+                    interaction.channel.send({ embeds : [Embed.wordScramble(word, ws.getQuestionNumber())]})
+                });
+            }
+        }
+        else {
+            if (!wordScrambleChannels.has(interaction.channel)) {
+                await interaction.reply({ content: "Word scramble is currently not started yet!", ephemeral: true });
+            }
+            else {
+                wordScrambleChannels.delete(interaction.channel);
+                await interaction.reply({ content: "Thank you for playing word scramble!"});
+            }
+        }
+        return;
+    }
+
     else if (interaction.commandName === "help") {
         return await interaction.reply({ embeds : [Embed.showCommands(interaction)], ephemeral : true });
     }
@@ -536,7 +576,7 @@ client.on("interactionCreate", async (interaction) => {
         queue.delete();
         await interaction.deferReply();
         return await interaction.followUp({ content: "⏹️  Player stopped!" });
-    } 
+    }
 
     else if (interaction.commandName === "queue") {
         const queue = player.nodes.get(interaction.guildId);

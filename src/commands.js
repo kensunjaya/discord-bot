@@ -156,6 +156,28 @@ interactionCommands = [
     {
         name: "lyrics",
         description : "Get lyrics of the current track"
+    },
+    {
+        name: "ws",
+        description: "Word scramble game",
+        options: [
+            {
+                name: "condition",
+                type: 3,
+                description: "Game status",
+                required: true,
+                choices : [
+                    {
+                        name: "start",
+                        value: "start"
+                    },
+                    {
+                        name: "stop",
+                        value: "stop"
+                    }
+                ]
+            }
+        ]
     }
 ]
 

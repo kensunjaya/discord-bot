@@ -13,6 +13,21 @@ const getIcon = (query) => {
 }
 
 class EmbedMessage {
+    wordScramble(obj, number, color=0x85C1E9) {
+        return new EmbedBuilder()
+        .setColor(color)
+        .setTitle(`Question ${number}`)
+        .setDescription(obj.scrambled)
+        .setFooter({text: 'Unscramble the word and type your answer in the chat'})
+    }
+
+    correctAnswer(user, ws, color=0x58D68D) {
+        return new EmbedBuilder()
+        .setColor(color)
+        .setAuthor({name: user.username, iconURL: user.displayAvatarURL(), url: user.avatarURL()})
+        .setDescription(`🎉 **Correct!** The answer is \`${ws.getAnswer()}\``)
+    }
+
     musicPlaying(obj, color=0xD6F7FF) {
         return new EmbedBuilder()
         .setColor(color)

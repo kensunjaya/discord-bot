@@ -20,6 +20,32 @@ class Utility {
         return text.match(/\b\w+\b/g) || [];
     }
 
+    async getScrambledWord() {
+        const word = await fetch("https://random-word-api.vercel.app/api", 
+        {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        }).then(response => {
+            if (response.ok) {
+                return response.json();
+            } else {
+                throw new Error("Failed to fetch data");
+            }
+        });
+        let a = word[0].split("")
+
+        for(let i = a.length - 1; i > 0; i--) {
+            let j = Math.floor(Math.random() * (i + 1));
+            let tmp = a[i];
+            a[i] = a[j];
+            a[j] = tmp;
+        }
+        // console.log('Answer:', word[0]);
+        return {"answer": word[0], "scrambled": a.join("")};
+    }
+
     findSimilarity = (str1, str2) => {
         str1 = str1.toLowerCase();
         str2 = str2.toLowerCase();
