@@ -178,6 +178,10 @@ interactionCommands = [
                 ]
             }
         ]
+    },
+    {
+        name: "balance",
+        description: "Check your current balance",
     }
 ]
 

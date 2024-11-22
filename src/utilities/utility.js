@@ -42,7 +42,7 @@ class Utility {
             a[i] = a[j];
             a[j] = tmp;
         }
-        // console.log('Answer:', word[0]);
+        console.log('Answer:', word[0]);
         return {"answer": word[0], "scrambled": a.join("")};
     }
 

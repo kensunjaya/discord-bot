@@ -9,10 +9,12 @@ const { Server } = require("socket.io");
 const { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-youtubei")
 const { SpotifyExtractor, SoundCloudExtractor } = require("@discord-player/extractor");
 const { WordScramble } = require('./game.js');
+const { MongoWorker } = require('./utilities/dbworker.js');
 const e = require('cors');
 
 const PORT = 3030;
 let playerFollowedUp = true;
+const mongo = new MongoWorker(process.env.MONGO_URI, "discord-bot");
 const io = new Server(PORT, {
     cors: {
         origin: "http://localhost:5173", // Replace with your frontend URL
@@ -125,6 +127,18 @@ client.on("messageCreate", async (message) => {
                 wordScrambleChannels.get(message.channel).setAnswer(word.answer);
                 wordScrambleChannels.get(message.channel).incrementQuestionNumber();
                 message.channel.send({ embeds : [Embed.wordScramble(word, wordScrambleChannels.get(message.channel).getQuestionNumber())]})
+            });
+            await mongo.findOne("Users", { userId: message.author.id }).then(async user => {
+                if (!user) {
+                    await mongo.insertOne("Users", {
+                        name: message.author.username,
+                        userId: message.author.id,
+                        balance: { 'usd': 1 }
+                    });
+                }
+                else {
+                    await mongo.updateOne("Users", { userId: message.author.id }, { balance: { 'usd': user.balance.usd + 1 } });
+                }
             });
         }
     }
@@ -267,6 +281,23 @@ client.on("interactionCreate", async (interaction) => {
         const reply = await interaction.fetchReply();
         const ping = reply.createdTimestamp - interaction.createdTimestamp;
         return await interaction.followUp({content : `\`\`\`elm\nPong!\nUser's latency : ${ping} ms\nBot's latency  : ${client.ws.ping} ms\`\`\``});
+    }
+    else if (interaction.commandName === "balance") {
+        await mongo.findOne("Users", { userId: interaction.user.id }).then(async user => {
+            if (!user) {
+                await mongo.insertOne("Users", {
+                    name: interaction.user.username,
+                    userId: interaction.user.id,
+                    balance: { 'usd': 0 }
+                }).then(() => {
+                    return interaction.reply({ content: `Your current balance is $0`, ephemeral: true });
+                });
+            }
+            else {
+                return interaction.reply({ content: `Your current balance is $${user.balance.usd}`, ephemeral: true });
+            }
+        });
+        return;
     }
     else if (interaction.commandName === "ws") {
         const state = interaction.options.get('condition').value;   

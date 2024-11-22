@@ -26,6 +26,7 @@ class EmbedMessage {
         .setColor(color)
         .setAuthor({name: user.username, iconURL: user.displayAvatarURL(), url: user.avatarURL()})
         .setDescription(`🎉 **Correct!** The answer is \`${ws.getAnswer()}\``)
+        .setFooter({text: `$1 has been added to ${user.username}'s balance`})
     }
 
     musicPlaying(obj, color=0xD6F7FF) {
