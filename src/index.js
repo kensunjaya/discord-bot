@@ -121,6 +121,7 @@ client.on("messageCreate", async (message) => {
         });
         io.emit('message', socketMessages);
         if (wordScrambleChannels.has(message.channel) && message.content === wordScrambleChannels.get(message.channel).getAnswer()) {
+            wordScrambleChannels.get(message.channel).addPlayer(new Player(message.author.username, message.author.id));
             await message.reply({embeds : [Embed.correctAnswer(message.author, wordScrambleChannels.get(message.channel))]});
             await util.getScrambledWord().then(word => {
                 wordScrambleChannels.get(message.channel).setQuestion(word.scrambled);
