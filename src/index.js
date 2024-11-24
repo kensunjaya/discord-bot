@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { PrismaClient } = require('@prisma/client');
+// const { PrismaClient } = require('@prisma/client');
 const { EmbedBuilder, Client, IntentsBitField, GuildMember, ActionRowBuilder, ButtonBuilder, ButtonStyle, SlashCommandBuilder, ActivityType } = require('discord.js');
 const { Player, QueryType, QueueRepeatMode } = require("discord-player");
 const { EmbedMessage } = require('./embed.js');
@@ -8,7 +8,7 @@ const { interactionCommands } = require('./commands.js');
 const { Server } = require("socket.io");
 const { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-youtubei")
 const { SpotifyExtractor, SoundCloudExtractor } = require("@discord-player/extractor");
-const { WordScramble } = require('./game.js');
+const { WordScramble, Participant } = require('./game.js');
 const { MongoWorker } = require('./utilities/dbworker.js');
 const e = require('cors');
 
@@ -25,8 +25,6 @@ const io = new Server(PORT, {
 });
 
 const socketMessages = [];
-
-const prisma = new PrismaClient();
 
 const client = new Client({
     intents: [
@@ -121,7 +119,7 @@ client.on("messageCreate", async (message) => {
         });
         io.emit('message', socketMessages);
         if (wordScrambleChannels.has(message.channel) && message.content === wordScrambleChannels.get(message.channel).getAnswer()) {
-            wordScrambleChannels.get(message.channel).addPlayer(new Player(message.author.username, message.author.id));
+            wordScrambleChannels.get(message.channel).addPlayer(new Participant(message.author.username, message.author.id));
             await message.reply({embeds : [Embed.correctAnswer(message.author, wordScrambleChannels.get(message.channel))]});
             await util.getScrambledWord().then(word => {
                 wordScrambleChannels.get(message.channel).setQuestion(word.scrambled);
@@ -307,11 +305,9 @@ client.on("interactionCreate", async (interaction) => {
                 await interaction.reply({ content: "A game is already running in this channel!", ephemeral: true });
             }
             else {
-                const ws = new WordScramble();
+                
                 await util.getScrambledWord().then(word => {
-                    ws.setQuestion(word.scrambled);
-                    ws.setAnswer(word.answer);
-                    ws.incrementQuestionNumber();
+                    const ws = new WordScramble(word.scrambled, word.answer);
                     wordScrambleChannels.set(interaction.channel, ws);
                     interaction.channel.send({ embeds : [Embed.wordScramble(word, ws.getQuestionNumber())]})
                 });

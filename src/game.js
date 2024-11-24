@@ -1,9 +1,5 @@
-class Player {
-  name: string;
-  id: string;
-  score: number;
-
-  constructor(name: string, id: string) {
+class Participant {
+  constructor(name, id) {
     this.name = name;
     this.id = id;
     this.score = 0;
@@ -19,27 +15,22 @@ class Player {
 }
 
 class WordScramble {
-  questionNumber: number;
-  question: string;
-  answer: string;
-  players: Player[];
-
-  constructor() {
-    this.questionNumber = 0;
-    this.question;
-    this.answer;
+  constructor(question, answer) {
+    this.questionNumber = 1;
+    this.question = question;
+    this.answer = answer;
     this.players = [];
   }
 
-  addPlayer(player: Player) {
+  addPlayer(player) {
     this.players.push(player);
   }
   
-  setQuestion(question: string) {
+  setQuestion(question) {
     this.question = question;
   }
 
-  setAnswer(answer: string) {
+  setAnswer(answer) {
     this.answer = answer;
   }
 
@@ -60,4 +51,4 @@ class WordScramble {
   }
 }
 
-module.exports = { WordScramble, Player };
+module.exports = { Participant, WordScramble };
