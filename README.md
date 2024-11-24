@@ -6,7 +6,7 @@ To use the bot, you'll need to install [Node.js v16.11.0](https://nodejs.org/en/
 Create .env file outside src folder and store your token there
 ```env
 TOKEN = // Your bot token here
-DATABASE_URL= // Your db url
+MONGO_URI = // Your mongodb uri
 ADMIN_ROLE_ID = // Your Discord id
 INTRO_URL = // YouTube url for on voice channel join intro
 ```
