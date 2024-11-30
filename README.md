@@ -43,4 +43,4 @@ If you encounter "Error: Used disallowed intents":
 <img src="https://discord.js.org/static/logo.svg" alt="discord js logo" width=40% height=40% />
 <img src="https://nodejs.org/static/logos/nodejsLight.svg" alt="NodeJS logo" width=40% height=40% />
 <img src="https://miro.medium.com/v2/resize:fit:800/0*CBjisl422hUyLxiG.png" alt="React logo" width="40%" height="40%"/>
-<img src="https://storage-us-gcs.bfldr.com/h5psv9c3jbk88pwc3xn79pp/v/1069931061/original/MongoDB_SpringGreen.png?Expires=1732594074&KeyName=gcs-bfldr-prod&Signature=rYCMGQuJ4bBYjFSqfBG4jIOglyE=" alt="Mongo logo" width="40%" height="40%"/>
+<img src="assets/MongoDB_SpringGreen.png" alt="Mongo logo" width="40%" height="40%"/>
