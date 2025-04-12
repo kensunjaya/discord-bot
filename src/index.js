@@ -49,7 +49,7 @@ client.on('ready', async (c) => {
     client.user.setPresence({
         activities: [{ name: `Type !deploy to enable commands`, type: ActivityType.Custom }],
     });
-    const access_token = "access_token=ya29.a0AZYkNZgS74F2Az-sWE2_rNYeBNQ8aSzi9UnKJgjPBSqypNGKflN7WrIF0dAeiusdkutNrEs2Av400DjV28tKqrMWqjEqsl-TzZdcD3NRaextqwI-baE6dwCcSOejJEVONduDgCSgAmAQrycq2gIkWGFDEGIy8EC4C-TSR5UVxmalAoWB4xL5aCgYKATESARASFQHGX2MiAOoE5_fwsu86nIAQqHN8Xw0187; refresh_token=1//0g8uQuSi2NANoCgYIARAAGBASNwF-L9IryiZP1G6ZVqPqsoe5c3UX-NAyEFXtP1D3J6KdqA24lEMDBFKIGzE7rK8c3A9ENY7jilY; scope=https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube-paid-content; token_type=Bearer; expiry_date=2025-04-08T15:32:05.661Z";
+
     await player.extractors.register(YoutubeiExtractor, {
         //authentication: access_token,
         //generateWithPoToken:true,
