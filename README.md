@@ -31,6 +31,13 @@ npm run dev
 ```
 The `npm install` command is necessary when running the bot and the dashboard for the first time
 
+## Additional Note
+<p>If you're running on ARM64 Linux, you'll need to install the following library</p>
+
+```bash
+npm install mediaplex-linux-arm64-gnu
+```
+
 If you encounter "Error: Used disallowed intents":
 <br>
 <ul>1. Navigate to Discord Development Portal</ul>
