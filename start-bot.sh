@@ -1,0 +1,1 @@
+.nvm/versions/node/v22.14.0/bin/node Codes/discord-bot/server/server.mjs

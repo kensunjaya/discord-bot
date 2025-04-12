@@ -12,6 +12,7 @@ const { WordScramble, Participant } = require('./game.js');
 const { MongoWorker } = require('./utilities/dbworker.js');
 const e = require('cors');
 
+
 const PORT = 3030;
 let playerFollowedUp = true;
 const mongo = new MongoWorker(process.env.MONGO_URI, "discord-bot");
@@ -43,13 +44,25 @@ const guildHandler = new Map();
 const queueHandler = new Map();
 const wordScrambleChannels = new Map();
 
-client.on('ready', (c) => {
+client.on('ready', async (c) => {
     console.log(`${c.user.tag} is online`);
     client.user.setPresence({
         activities: [{ name: `Type !deploy to enable commands`, type: ActivityType.Custom }],
     });
-    
-}) // access events, listens when our bot is ready
+    const access_token = "access_token=ya29.a0AZYkNZgS74F2Az-sWE2_rNYeBNQ8aSzi9UnKJgjPBSqypNGKflN7WrIF0dAeiusdkutNrEs2Av400DjV28tKqrMWqjEqsl-TzZdcD3NRaextqwI-baE6dwCcSOejJEVONduDgCSgAmAQrycq2gIkWGFDEGIy8EC4C-TSR5UVxmalAoWB4xL5aCgYKATESARASFQHGX2MiAOoE5_fwsu86nIAQqHN8Xw0187; refresh_token=1//0g8uQuSi2NANoCgYIARAAGBASNwF-L9IryiZP1G6ZVqPqsoe5c3UX-NAyEFXtP1D3J6KdqA24lEMDBFKIGzE7rK8c3A9ENY7jilY; scope=https://www.googleapis.com/auth/youtube https://www.googleapis.com/auth/youtube-paid-content; token_type=Bearer; expiry_date=2025-04-08T15:32:05.661Z";
+    await player.extractors.register(YoutubeiExtractor, {
+        //authentication: access_token,
+        //generateWithPoToken:true,
+        //streamOptions: {
+            //useClient: 'ANDROID',
+        //},
+        //overrideBridgeMode: 'ytmusic',
+    });
+    //await player.extractors.register(SpotifyExtractor, {
+        //createStream: createYoutubeiStream,
+    //})
+    await player.extractors.register(SoundCloudExtractor, {});
+});
 
 
 player.events.on('playerStart', async (queue, track) => {
@@ -83,7 +96,7 @@ player.events.on('disconnect', (queue) => {
 player.events.on('error', (queue, error) => {
     // Emitted when the player queue encounters error
     console.log(`General player error event: ${error.message}`);
-    guildHandler.get(queue.guild).channel.send({embeds : [Embed.alert("Something went wrong while working with the queue")]});
+    guildHandler.get(queue.guild).channel.send({embeds : [Embed.alert("Failed to fetch audio stream data")]});
 });
 
 player.events.on('playerError', (queue, error) => {
@@ -329,24 +342,15 @@ client.on("interactionCreate", async (interaction) => {
         return await interaction.reply({ embeds : [Embed.showCommands(interaction)], ephemeral : true });
     }
     else if (interaction.commandName === "info") {
-        const [content, row] = Embed.info(interaction);
+        const [content, row] = await Embed.info(interaction);
         return await interaction.reply({ content : content, components : row ? [row] : null, ephemeral : true });
     }
 
     if (!(interaction.member instanceof GuildMember) || !interaction.member.voice.channel) {
         return await interaction.reply({ content: "You are not in a voice channel!", ephemeral: true });
     }
+    
 
-    await player.extractors.register(SpotifyExtractor, {
-        createStream: createYoutubeiStream,
-    })
-    await player.extractors.register(YoutubeiExtractor, {
-        streamOptions: {
-            useClient: 'ANDROID',
-        },
-        overrideBridgeMode: 'ytmusic',
-    });
-    await player.extractors.register(SoundCloudExtractor, {});
 
 
     console.log(`[${interaction.guild.name} (${interaction.channel.name})] : [${interaction.user.username}] => ${interaction}`);
@@ -362,10 +366,12 @@ client.on("interactionCreate", async (interaction) => {
     io.emit('message', socketMessages);
 
     if (interaction.commandName === "play" || interaction.commandName === "p") {
+        console.log("play command called");
         await interaction.deferReply();
         const query = interaction.options.get("query").value;
         const search_engine = interaction.options.get("search_engine");
-
+        console.log("got params");
+        
         const queue = player.nodes.create(interaction.guild, {
             metadata: interaction.channel,
             leaveOnEmpty: false,
@@ -373,6 +379,8 @@ client.on("interactionCreate", async (interaction) => {
             selfDeaf: true,
             volume: 100,
         });
+        
+        console.log("player nodes created");
 
         if (!queue.isPlaying() && !queue.connection) {
             guildHandler.set(interaction.guild, interaction);
@@ -386,6 +394,7 @@ client.on("interactionCreate", async (interaction) => {
             }).then(async (result) => {
                 queue.addTrack(result.tracks[0]);
             });
+            console.log("player created");
         }
 
         let searchResult = await player
@@ -396,6 +405,7 @@ client.on("interactionCreate", async (interaction) => {
         .catch((error) => {
             console.log(error);
         });
+        console.log("found a result");
 
         let similarity = 0;
 
@@ -403,9 +413,10 @@ client.on("interactionCreate", async (interaction) => {
             if (search_engine && search_engine.type != 3) {
                 await interaction.followUp({ content: "No results were found!" });
             }
-            const availableEngines = [QueryType.SPOTIFY_PLAYLIST,
+            /*const availableEngines = [QueryType.SPOTIFY_PLAYLIST,
                 QueryType.SPOTIFY_ALBUM,
-                QueryType.SPOTIFY_SONG]
+                QueryType.SPOTIFY_SONG]*/
+            const availableEngines = []
             if (!search_engine) {
                 availableEngines.push(QueryType.YOUTUBE);
                 availableEngines.push(QueryType.YOUTUBE_PLAYLIST);
@@ -421,11 +432,12 @@ client.on("interactionCreate", async (interaction) => {
                 if (searchResult) break;
             }
             if (!searchResult || !searchResult.tracks.length) {
-                return await interaction.followUp({ content: "No results were found!" });
+                console.log(searchResult);
+                //return await interaction.followUp({ content: "No results were found!" });
             }
         }
 
-        if (searchResult) {
+        if (searchResult.tracks.length) {
             // Check for query and result similarity
             similarity = util.findSimilarity(query, searchResult.tracks[0].url);
             if (similarity < 0.8) {
@@ -487,7 +499,7 @@ client.on("interactionCreate", async (interaction) => {
         }
 
         if (!searchResult.playlist) {
-            await interaction.followUp(`📔 | Added [${searchResult.tracks[0].description}](<${searchResult.tracks[0].url}>) to queue **[${Math.round(similarity*100)}% match]**`);
+            await interaction.followUp(`📔 | Added [${searchResult.tracks[0].description ?? searchResult.tracks[0].title}](<${searchResult.tracks[0].url}>) to queue **[${Math.round(similarity*100)}% match]**`);
         }
     } 
 
@@ -508,7 +520,7 @@ client.on("interactionCreate", async (interaction) => {
 
             
             return await interaction.followUp({
-                embeds: success ? [Embed.alert(`Skipped track to **${queue.tracks.data[0].description}**`, 0x85C1E9)] : [Embed.alert("Something went wrong while we were trying to skip the current track. Try again later")]
+                embeds: success ? [Embed.alert(`Skipped track to **${queue.tracks.data[0].description ?? queue.tracks.data[0].title}**`, 0x85C1E9)] : [Embed.alert("Something went wrong while we were trying to skip the current track. Try again later")]
             });
         }
         catch (error) {

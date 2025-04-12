@@ -1,5 +1,7 @@
 const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
 const { QueryType } = require("discord-player");
+const os = require('os');
+const si = require('systeminformation');
 
 
 const getIcon = (query) => {
@@ -67,8 +69,13 @@ class EmbedMessage {
         .setThumbnail(`${obj.thumbnail}`)
         .setFooter({text : `Type : ${obj.type.charAt(0).toUpperCase() + obj.type.slice(1)}`, iconURL : getIcon(obj.source)});
     }
-    info(obj) {
-        const infoBuilder = '```yaml\nCreated by @kensunjaya\n\nThis bot is a music player bot that can play music from Youtube and Spotify\n\nSince this bot is still in development, there might be some bugs and errors. If you find one, please report it to me:\nkennethsunjaya@gmail.com\n\nAdditional Notes:\n- Spotify search engine is still in development. Some tracks might not be found\n- Even though the bot uses Spotify\'s search engine to retrieve music, it still streams the audio from YouTube.\n- Discord\'s WebHook token is expired after some period of time, so the bot might send new queue message instead of editing the old one```';
+    async   info(obj) {
+        const temp = await si.cpuTemperature();
+        const cpuData = await si.cpu();
+        const gpu = await si.graphics();
+
+        const systemInformation = `OS: ${os.type()} ${os.release()}\nPlatform: ${os.platform()}\nCPU: ${cpuData.manufacturer} ${cpuData.brand} (${cpuData.speed}GHz, ${cpuData.cores} cores)\nArch: ${os.arch()}\nCPU Temperature: ${temp.main}°C\nTotal Memory: ${(os.totalmem() / (1024 ** 3)).toFixed(2)} GB\nFree Memory: ${(os.freemem() / (1024 ** 3)).toFixed(2)} GB\nUptime: ${(os.uptime() / 60).toFixed(2)} mins`;
+        const infoBuilder = `\`\`\`yaml\nCreated by @kensunjaya\nThis bot is a music player bot that can play music from Youtube and Spotify\nSince this bot is still in development, there might be some bugs and errors.\n\nSystem Information:\n${systemInformation}\`\`\``;
         if (obj.user.id === process.env.ADMIN_ROLE_ID) {
             const fetchButton = new ButtonBuilder()
                 .setCustomId('fetch')
