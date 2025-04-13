@@ -283,6 +283,16 @@ client.on("interactionCreate", async (interaction) => {
             console.log(guilds) // this feature is not finished yet
             await interaction.deferUpdate();
         }
+        else if (interaction.customId === 'refreshInfo') {
+            const [content, row] = await Embed.info(interaction);
+            try {
+                return await interaction.reply({ content : content, components : row ? [row] : null, ephemeral : true });
+            }
+            catch (error) {
+                console.error("Failed to refresh info");
+                return;
+            }
+        }
     }
     
 

@@ -83,9 +83,14 @@ class EmbedMessage {
                 .setCustomId('fetch')
                 .setLabel('DUMP DATA')
                 .setStyle(ButtonStyle.Secondary);
+            const refreshInfoButton = new ButtonBuilder()
+                .setCustomId('refreshInfo')
+                .setLabel('REFRESH')
+                .setStyle(ButtonStyle.Primary);
             
             const row = new ActionRowBuilder()
-                .addComponents(fetchButton);
+                .addComponents(fetchButton)
+                .addComponents(refreshInfoButton);
 
             return [infoBuilder, row];
         }
