@@ -69,17 +69,19 @@ class EmbedMessage {
         .setThumbnail(`${obj.thumbnail}`)
         .setFooter({text : `Type : ${obj.type.charAt(0).toUpperCase() + obj.type.slice(1)}`, iconURL : getIcon(obj.source)});
     }
-    async   info(obj) {
+    async info(obj) {
         const temp = await si.cpuTemperature();
         const cpuData = await si.cpu();
         const gpu = await si.graphics();
+        const gpuData = gpu.controllers[0];
+        const gpuInfo = gpuData ? `${gpuData.model} (${gpuData.vendor})` : 'N/A';
 
-        const systemInformation = `OS: ${os.type()} ${os.release()}\nPlatform: ${os.platform()}\nCPU: ${cpuData.manufacturer} ${cpuData.brand} (${cpuData.speed}GHz, ${cpuData.cores} cores)\nArch: ${os.arch()}\nCPU Temperature: ${temp.main}°C\nTotal Memory: ${(os.totalmem() / (1024 ** 3)).toFixed(2)} GB\nFree Memory: ${(os.freemem() / (1024 ** 3)).toFixed(2)} GB\nUptime: ${(os.uptime() / 60).toFixed(2)} mins`;
+        const systemInformation = `OS: ${os.type()} ${os.release()}\nPlatform: ${os.platform()}\nCPU: ${cpuData.manufacturer} ${cpuData.brand} (${cpuData.speed.toPrecision(3)} GHz, ${cpuData.cores} cores)\nArch: ${os.arch()}\nCPU Temperature: ${temp.main}°C\nGPU: ${gpuInfo}\nTotal Memory: ${(os.totalmem() / (1024 ** 3)).toFixed(2)} GB\nFree Memory: ${(os.freemem() / (1024 ** 3)).toFixed(2)} GB\nUptime: ${(os.uptime() / 60).toFixed(2)} mins`;
         const infoBuilder = `\`\`\`yaml\nCreated by @kensunjaya\nThis bot is a music player bot that can play music from Youtube and Spotify\nSince this bot is still in development, there might be some bugs and errors.\n\nSystem Information:\n${systemInformation}\`\`\``;
         if (obj.user.id === process.env.ADMIN_ROLE_ID) {
             const fetchButton = new ButtonBuilder()
                 .setCustomId('fetch')
-                .setLabel('UPDATE DATABASE')
+                .setLabel('DUMP DATA')
                 .setStyle(ButtonStyle.Secondary);
             
             const row = new ActionRowBuilder()
