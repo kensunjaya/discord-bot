@@ -73,14 +73,14 @@ client.on('ready', async (c) => {
         //authentication: access_token,
         //generateWithPoToken:true,
         //streamOptions: {
-            //useClient: 'ANDROID',
+        //    useClient: 'WEB',
         //},
         //overrideBridgeMode: 'ytmusic',
     });
     //await player.extractors.register(SpotifyExtractor, {
         //createStream: createYoutubeiStream,
     //})
-    await player.extractors.register(SoundCloudExtractor, {});
+    //await player.extractors.register(SoundCloudExtractor, {});
 });
 
 
