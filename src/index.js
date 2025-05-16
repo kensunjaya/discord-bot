@@ -18,7 +18,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const training_dataset = [
   ["Hina foto ini dalam 1 kalimat bahasa gaul", "Apaan sih norak banget!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Jelek banget, kek orang gapernah pakai kamera"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Idih najis banget, kayak habis ketabrak beuz!"],
   ["Hina foto ini dalam 1 kalimat bahasa gaul", "Wow norak banget!"],
   ["Hina foto ini dalam 1 kalimat bahasa gaul", "Ew, kek makanan kucing!"],
 ];
