@@ -1,0 +1,7 @@
+TOKEN = "OTM5NTgxMDUxODQ2NjgwNTg2.Ggwq50.IulGxrv8ac0aJgI0p0FIl_yTru9HHrK2FAtHXU"
+MONGO_URI="mongodb+srv://kennethsunjaya:c418Wait@discord-bot.mfjgh.mongodb.net/?retryWrites=true&w=majority&appName=discord-bot"
+
+ADMIN_ROLE_ID=264363293374677002
+
+# INTRO_URL="https://youtube.com/watch?v=oFYwby6tNgo"
+INTRO_URL="https://youtube.com/watch?v=rc7-MQz6H38"
