@@ -10,7 +10,17 @@ const { YoutubeiExtractor, createYoutubeiStream } = require("discord-player-yout
 const { SpotifyExtractor, SoundCloudExtractor } = require("@discord-player/extractor");
 const { WordScramble, Participant } = require('./game.js');
 const { MongoWorker } = require('./utilities/dbworker.js');
+const { GoogleGenAI } = require('@google/genai');
+const fetch = require('node-fetch');
 const e = require('cors');
+
+const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+const training_dataset = [
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Apaan sih norak banget!"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Jelek banget, kek orang gapernah pakai kamera"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Wow norak banget!"]
+];
 
 
 const PORT = 3030;
@@ -43,6 +53,15 @@ const Embed = new EmbedMessage();
 const guildHandler = new Map();
 const queueHandler = new Map();
 const wordScrambleChannels = new Map();
+
+function buildFewShotPrompt(dataset, task) {
+  let prompt = "";
+  for (const [input, output] of dataset) {
+    prompt += `Q: ${input}\nA: ${output}\n`;
+  }
+  prompt += `Q: ${task}\nA:`;
+  return prompt;
+}
 
 client.on('ready', async (c) => {
     console.log(`${c.user.tag} is online`);
@@ -119,6 +138,33 @@ client.on("messageCreate", async (message) => {
             contentType: 'image'
         });
         io.emit('message', socketMessages);
+
+        try {
+            const imageUrl = message.attachments.first().url;
+            const response = await fetch(imageUrl);
+            const imageArrayBuffer = await response.arrayBuffer();
+            const base64ImageData = Buffer.from(imageArrayBuffer).toString('base64');
+
+            const prompt = buildFewShotPrompt(training_dataset, "Hina foto ini dalam 1 kalimat bahasa gaul");
+
+            const result = await ai.models.generateContent({
+                model: "gemini-2.0-flash",
+                contents: [
+                {
+                    inlineData: {
+                    mimeType: 'image/webp',
+                    data: base64ImageData,
+                    },
+                },
+                { text: prompt }
+                ],
+            });
+
+            await message.reply(result.text)
+        } catch (error) {
+            console.error("Error processing image:", error);
+        }
+        
     }
     else {
         console.log(`[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.content}`)
