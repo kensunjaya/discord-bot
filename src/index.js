@@ -158,7 +158,7 @@ client.on("messageCreate", async (message) => {
             const prompt = buildFewShotPrompt(training_dataset, "Candakan foto ini");
 
             const result = await ai.models.generateContent({
-                model: "gemini-2.5-flash-preview-05-20",
+                model: "gemini-2.0-flash",
                 temperature: 1.5,
                 contents: [
                 {
