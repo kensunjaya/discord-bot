@@ -17,10 +17,16 @@ const e = require('cors');
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const training_dataset = [
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Apaan sih norak banget!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Idih najis banget, kayak habis ketabrak beuz!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Wow norak banget!"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Kayak anak hilang aja!"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Idih najis banget, kayak monyet!"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Nampaknya orang ini tidak pernah lihat teknologi!"],
   ["Hina foto ini dalam 1 kalimat bahasa gaul", "Ew, kek makanan kucing!"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Jelek kayak gembel!"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Ngeri amat, kayak kuntilanak baru lahir!"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Main terus! Gak ada kerjaan lain?"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Gak ada otak ya?"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Kayak orang gila!"],
+  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Kayak anak hilang aja!"],
 ];
 
 
