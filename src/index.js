@@ -155,10 +155,10 @@ client.on("messageCreate", async (message) => {
             const imageArrayBuffer = await response.arrayBuffer();
             const base64ImageData = Buffer.from(imageArrayBuffer).toString('base64');
 
-            const prompt = buildFewShotPrompt(training_dataset, "Hina foto ini dalam 1 kalimat bahasa gaul");
+            const prompt = buildFewShotPrompt(training_dataset, "Hina foto ini");
 
             const result = await ai.models.generateContent({
-                model: "gemini-2.0-flash",
+                model: "gemini-2.5-flash",
                 contents: [
                 {
                     inlineData: {
