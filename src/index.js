@@ -17,16 +17,19 @@ const e = require('cors');
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const training_dataset = [
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Kayak anak hilang aja!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Idih najis banget, kayak monyet!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Nampaknya orang ini tidak pernah lihat teknologi!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Ew, kek makanan kucing!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Jelek kayak gembel!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Ngeri amat, kayak kuntilanak baru lahir!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Main terus! Gak ada kerjaan lain?"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Gak ada otak ya?"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Kayak orang gila!"],
-  ["Hina foto ini dalam 1 kalimat bahasa gaul", "Kayak anak hilang aja!"],
+    ["Hina foto ini", "Kayak anak hilang aja!"],
+    ["Hina foto ini", "Idih najis banget, kayak monyet!"],
+    ["Hina foto ini", "Pernah ga sih lagi makan tiba-tiba pengen muntah? Ya gara-gara ngeliat foto lo!"],
+    ["Hina foto ini", "Ew, kek makanan kucing!"],
+    ["Hina foto ini", "Kucel banget kayak gembel!"],
+    ["Hina foto ini", "Ngeri amat, kayak setan!"],
+    ["Hina foto ini", "Macam psikopat!"],
+    ["Hina foto ini", "Main terus! Gak ada kerjaan lain?"],
+    ["Hina foto ini", "Gak ada otak ya?"],
+    ["Hina foto ini", "Kayak orang gila!"],
+    ["Hina foto ini", "Kayak anak hilang aja!"],
+    ["Hina foto ini", "Bisa main ga sih? Cupu banget!"],
+    ["Hina foto ini", "Ikan hiu makan tomat, idih najisnyo!"],
 ];
 
 
