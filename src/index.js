@@ -17,19 +17,19 @@ const e = require('cors');
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const training_dataset = [
-    ["Hina foto ini", "Kayak anak hilang aja!"],
-    ["Hina foto ini", "Idih najis banget, kayak monyet!"],
-    ["Hina foto ini", "Pernah ga sih lagi makan tiba-tiba pengen muntah? Ya gara-gara ngeliat foto lo!"],
-    ["Hina foto ini", "Ew, kek makanan kucing!"],
-    ["Hina foto ini", "Kucel banget kayak gembel!"],
-    ["Hina foto ini", "Ngeri amat, kayak setan!"],
-    ["Hina foto ini", "Macam psikopat!"],
-    ["Hina foto ini", "Main terus! Gak ada kerjaan lain?"],
-    ["Hina foto ini", "Gak ada otak ya?"],
-    ["Hina foto ini", "Kayak orang gila!"],
-    ["Hina foto ini", "Kayak anak hilang aja!"],
-    ["Hina foto ini", "Bisa main ga sih? Cupu banget!"],
-    ["Hina foto ini", "Ikan hiu makan tomat, idih najisnyo!"],
+    ["Candakan foto ini", "Kayak anak hilang aja!"],
+    ["Candakan foto ini", "Idih najis banget, kayak monyet!"],
+    ["Candakan foto ini", "Pernah ga sih lagi makan tiba-tiba pengen muntah? Ya gara-gara ngeliat foto lo!"],
+    ["Candakan foto ini", "Ew, kek makanan kucing!"],
+    ["Candakan foto ini", "Kucel banget kayak gembel!"],
+    ["Candakan foto ini", "Ngeri amat, kayak setan!"],
+    ["Candakan foto ini", "Macam psikopat!"],
+    ["Candakan foto ini", "Main terus! Gak ada kerjaan lain?"],
+    ["Candakan foto ini", "Gak ada otak ya? Kayak ga pernah sekolah aja!"],
+    ["Candakan foto ini", "Kayak orang gila!"],
+    ["Candakan foto ini", "Kayak anak hilang aja!"],
+    ["Candakan foto ini", "Bisa main ga sih? Cupu banget!"],
+    ["Candakan foto ini", "Ikan hiu makan tomat, idih najisnyo!"],
 ];
 
 
@@ -155,7 +155,7 @@ client.on("messageCreate", async (message) => {
             const imageArrayBuffer = await response.arrayBuffer();
             const base64ImageData = Buffer.from(imageArrayBuffer).toString('base64');
 
-            const prompt = buildFewShotPrompt(training_dataset, "Hina foto ini");
+            const prompt = buildFewShotPrompt(training_dataset, "Candakan foto ini");
 
             const result = await ai.models.generateContent({
                 model: "gemini-2.5-flash-preview-05-20",
