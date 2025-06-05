@@ -23,13 +23,18 @@ const training_dataset = [
     ["Candakan foto ini", "Ew, kek makanan kucing!"],
     ["Candakan foto ini", "Kucel banget kayak gembel!"],
     ["Candakan foto ini", "Ngeri amat, kayak setan!"],
-    ["Candakan foto ini", "Macam psikopat!"],
+    ["Candakan foto ini", "Kayak psikopat!"],
     ["Candakan foto ini", "Main terus! Gak ada kerjaan lain?"],
     ["Candakan foto ini", "Gak ada otak ya? Kayak ga pernah sekolah aja!"],
     ["Candakan foto ini", "Kayak orang gila!"],
     ["Candakan foto ini", "Kayak anak hilang aja!"],
     ["Candakan foto ini", "Bisa main ga sih? Cupu banget!"],
     ["Candakan foto ini", "Ikan hiu makan tomat, idih najisnyo!"],
+    ["Candakan foto ini", "Gak ada kerjaan lain? Main terus!"],
+    ["Candakan foto ini", "Kalo lo jadi makanan, lo jadi apa? Makanan kucing?"],
+    ["Candakan foto ini", "Kayak orang gak pernah mandi!"],
+    ["Candakan foto ini", "Loh loh, ini foto apa? Kayak orang lagi ngupil!"],
+    ["Candakan foto ini", "Ih gitu doang bangga."]
 ];
 
 
@@ -174,6 +179,7 @@ client.on("messageCreate", async (message) => {
             await message.reply(result.text)
         } catch (error) {
             console.error("Error processing image:", error);
+            await message.reply("Lagi malas menanggapi. No komen.");
         }
         
     }
