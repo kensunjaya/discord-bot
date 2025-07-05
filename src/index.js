@@ -34,7 +34,7 @@ const training_dataset = [
     ["Beri sarkasme untuk foto ini", "Kucing ini udah menang dalam hidup. Kamu kapan?"],
     ["Beri sarkasme untuk foto ini", "Udah siap viral, minimal di grup keluarga."],
     ["Beri sarkasme untuk foto ini", "MasterChef merinding lihat ini."],
-    ["Beri sarkasme untuk foto ini", "Selamat wisuda! Sekarang saatnya nganggur dengan gelar."]
+    ["Beri sarkasme untuk foto ini", "Selamat wisuda! Sekarang saatnya nganggur dengan gelar."],
     ["Beri sarkasme untuk foto ini", "Kamu lagi nyari jodoh atau cuma selfie doang?"],
     ["Beri sarkasme untuk foto ini", "Akhirnya lepas dari tugas, masuk ke utang."],
     ["Beri sarkasme untuk foto ini", "AFK dari kenyataan, ON dari kekalahan."],
