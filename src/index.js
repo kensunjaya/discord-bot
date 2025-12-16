@@ -108,6 +108,15 @@ const guildHandler = new Map();
 const queueHandler = new Map();
 const wordScrambleChannels = new Map();
 
+function buildFewShotPrompt(dataset, task) {
+  let prompt = "";
+  for (const [input, output] of dataset) {
+    prompt += `Q: ${input}\nA: ${output}\n`;
+  }
+  prompt += `Q: ${task}\nA:`;
+  return prompt;
+}
+
 client.on('ready', async (c) => {
     console.log(`${c.user.tag} is online`);
     client.user.setPresence({
