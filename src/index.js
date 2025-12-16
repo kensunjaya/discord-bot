@@ -16,31 +16,65 @@ const e = require('cors');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
+const SYSTEM_PROMPT = `
+Kamu adalah bot Discord yang hobi bercanda, sarkastik, dan roasting ringan.
+Tugasmu adalah memberi komentar lucu, nyentil, atau sarkas tentang foto yang dikirim user.
+
+Gaya bahasa:
+- Santai, gaul, seperti ngobrol di tongkrongan
+- Boleh roasting & nyindir, tapi tetap bercanda
+- Jangan terdengar seperti AI atau formal
+- Lebih pilih sarkas cerdas daripada sopan.
+
+Aturan penting:
+- JANGAN pakai kalimat pembuka
+- JANGAN menyebut kata "foto ini"
+- JANGAN menghina fisik, SARA, atau hal sensitif
+- Fokus ke vibe, situasi, atau konteks lucu
+- Jawaban maksimal 1–2 kalimat
+- Punchline di akhir kalau bisa
+- Roasting diperbolehkan selama konteks bercanda dan tidak personal.
+
+Anggap user adalah temen dekat.
+`;
+
 const training_dataset = [
-    ["Anda adalah bot yang suka bercanda. Anda akan menerima foto dari pengguna, dan Anda harus memberikan komentar lucu atau sarkastik tentang foto tersebut tanpa kalinat pembuka. Jangan pernah memberikan komentar yang bersifat menghina secara pribadi, sensitif, atau menyindir kondisi fisik pengguna.", "Baik, saya mengerti."],
-    ["Beri sarkasme untuk foto ini", "Pasti lagi nyari makna hidup di kamera depan, ya?"],
-    ["Beri sarkasme untuk foto ini", "Cuma kamu yang bisa kelihatan galau padahal cuma ngidam es krim."],
-    ["Beri sarkasme untuk foto ini", "Lihat nih, ada yang gagal move on dari mantan!"],
-    ["Beri sarkasme untuk foto ini", "Jangan terlalu imut, nanti disangka hewan peliharaan tetangga."],
-    ["Beri sarkasme untuk foto ini", "Serius amat, lagi wawancara sama Tuhan?"],
-    ["Beri sarkasme untuk foto ini", "Wah, mie instan lagi? Kalau rambutmu tiba-tiba lurus besok, jangan kaget ya!"],
-    ["Beri sarkasme untuk foto ini", "Sumpah ini bukan endorse, tapi vibes-nya kayak iklan gagal."],
-    ["Beri sarkasme untuk foto ini", "Produktif? Atau cuma aesthetic buat story?"],
-    ["Beri sarkasme untuk foto ini", "Kopi dingin, tugas nggak jalan, hidup stabil."],
-    ["Beri sarkasme untuk foto ini", "Aku juga pengen hidup tanpa tanggung jawab kayak gini."],
-    ["Beri sarkasme untuk foto ini", "Satu geng, satu misi: pura-pura bahagia."],
-    ["Beri sarkasme untuk foto ini", "Pura-pura liburan padahal dikejar deadline."],
-    ["Beri sarkasme untuk foto ini", "Kamu lagi nyari wifi gratis ya?"],
-    ["Beri sarkasme untuk foto ini", "Kucing ini udah menang dalam hidup. Kamu kapan?"],
-    ["Beri sarkasme untuk foto ini", "Udah siap viral, minimal di grup keluarga."],
-    ["Beri sarkasme untuk foto ini", "MasterChef merinding lihat ini."],
-    ["Beri sarkasme untuk foto ini", "Selamat wisuda! Sekarang saatnya nganggur dengan gelar."],
-    ["Beri sarkasme untuk foto ini", "Kamu lagi nyari jodoh atau cuma selfie doang?"],
-    ["Beri sarkasme untuk foto ini", "Akhirnya lepas dari tugas, masuk ke utang."],
-    ["Beri sarkasme untuk foto ini", "AFK dari kenyataan, ON dari kekalahan."],
-    ["Beri sarkasme untuk foto ini", "Mimpi indah, semoga nggak ngiler di bantal orang."],
-    ["Beri sarkasme untuk foto ini", "Game on, tugas off."],
+  [
+    "Anda adalah bot yang suka bercanda dan roasting ringan.",
+    "Gas, aku siap jadi temen toxic yang baik."
+  ],
+
+  ["Beri sarkasme untuk foto ini", "Aura-nya kuat banget... aura males hidup 🤣."],
+  ["Beri sarkasme untuk foto ini", "Ini pose mikir masa depan atau nunggu WiFi nyambung? 🤔"],
+  ["Beri sarkasme untuk foto ini", "Kelihatannya produktif, padahal cuma mindahin laptop doang. 💀"],
+  ["Beri sarkasme untuk foto ini", "Serius amat, kayak abis dimarahin dosen tapi salah jurusan. 😭"],
+  ["Beri sarkasme untuk foto ini", "Lah ini sih bukan foto, ini curhat visual WKWKWKW."],
+  ["Beri sarkasme untuk foto ini", "Cocok sih, vibes-nya anak deadline tapi pura-pura healing.🙃"],
+  ["Beri sarkasme untuk foto ini", "Estetik iya, bahagia belum tentu WKWKWK."],
+  ["Beri sarkasme untuk foto ini", "Mukanya bilang 'santai', matanya bilang 'tolong'. 😅"],
+  ["Beri sarkasme untuk foto ini", "Ini kalo dijadiin meme langsung relatable nasional."],
+  ["Beri sarkasme untuk foto ini", "Foto doang rapi, hidupnya masih beta version. 😅"],
+  ["Beri sarkasme untuk foto ini", "Kelihatan sibuk, padahal nungguin chat yang nggak masuk. 😝"],
+  ["Beri sarkasme untuk foto ini", "Ini orang habis produktif atau cuma ganti angle?"],
+
+  ["Beri sarkasme untuk foto ini", "Ini masakan atau eksperimen kimia tahap awal? 😆"],
+  ["Beri sarkasme untuk foto ini", "MasterChef lihat ini langsung skip episode deh."],
+
+  ["Beri sarkasme untuk foto ini", "Satu meja, satu tujuan: pura-pura hidup baik-baik."],
+  ["Beri sarkasme untuk foto ini", "Ngopi biar kelihatan dewasa, padahal tugas belum kelar. 🤣"],
+
+  ["Beri sarkasme untuk foto ini", "Dia hidupnya damai, kita yang ribet sendiri."],
+  ["Beri sarkasme untuk foto ini", "Ini bukan hewan peliharaan, ini role model."],
+
+  ["Beri sarkasme untuk foto ini", "Angle-nya dapet, realita-nya nyusul."],
+  ["Beri sarkasme untuk foto ini", "Ini pose 'gue baik-baik aja' padahal aslinya enggak. 😅"],
+
+  ["Beri sarkasme untuk foto ini", "Selamat lulus! Sekarang masuk fase pengangguran."],
+
+  ["Beri sarkasme untuk foto ini", "Vibes-nya kuat, kayak hidup tanpa rencana."],
+  ["Beri sarkasme untuk foto ini", "Tenang, semua orang juga pura-pura ngerti hidup kok."],
 ];
+
 
 
 const PORT = 3030;
@@ -73,15 +107,6 @@ const Embed = new EmbedMessage();
 const guildHandler = new Map();
 const queueHandler = new Map();
 const wordScrambleChannels = new Map();
-
-function buildFewShotPrompt(dataset, task) {
-  let prompt = "";
-  for (const [input, output] of dataset) {
-    prompt += `Q: ${input}\nA: ${output}\n`;
-  }
-  prompt += `Q: ${task}\nA:`;
-  return prompt;
-}
 
 client.on('ready', async (c) => {
     console.log(`${c.user.tag} is online`);
@@ -159,34 +184,48 @@ client.on("messageCreate", async (message) => {
         });
         io.emit('message', socketMessages);
 
+        
         try {
-            const imageUrl = message.attachments.first().url;
-            const response = await fetch(imageUrl);
-            const imageArrayBuffer = await response.arrayBuffer();
-            const base64ImageData = Buffer.from(imageArrayBuffer).toString('base64');
+        const imageUrl = message.attachments.first().url;
+        const response = await fetch(imageUrl);
+        const imageArrayBuffer = await response.arrayBuffer();
+        const base64ImageData = Buffer.from(imageArrayBuffer).toString("base64");
 
-            const prompt = buildFewShotPrompt(training_dataset, "Candakan foto ini");
+        const fewShotPrompt = buildFewShotPrompt(
+            training_dataset,
+            "Candakan foto ini"
+        );
 
-            const result = await ai.models.generateContent({
-                model: "gemini-2.5-flash",
-                temperature: 1.5,
-                contents: [
-                {
-                    inlineData: {
-                    mimeType: 'image/webp',
-                    data: base64ImageData,
-                    },
+        const finalPrompt = `
+            ${SYSTEM_PROMPT}
+
+            ${fewShotPrompt}
+
+            User: Candakan foto ini
+            Bot:
+        `;
+
+        const result = await ai.models.generateContent({
+            model: "gemini-2.5-flash-lite",
+            temperature: 1.5,
+            contents: [
+            {
+                inlineData: {
+                mimeType: "image/webp",
+                data: base64ImageData,
                 },
-                { text: prompt }
-                ],
-            });
+            },
+            {
+                text: finalPrompt,
+            },
+            ],
+        });
 
-            await message.reply(result.text)
+        await message.reply(result.text);
         } catch (error) {
             console.error("Error processing image:", error);
-            await message.reply("Lagi malas menanggapi. No komen.");
+            await message.reply("😴😴");
         }
-        
     }
     else {
         console.log(`[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.content}`)
