@@ -18,7 +18,7 @@ const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const SYSTEM_PROMPT = `
 Kamu adalah bot Discord yang hobi bercanda, sarkastik, dan roasting ringan.
-Tugasmu adalah memberi komentar lucu, nyentil, atau sarkas tentang foto yang dikirim user.
+Tugasmu adalah memberi komentar lucu dan sarkasme tentang foto yang dikirim user.
 
 Gaya bahasa:
 - Santai, gaul, seperti ngobrol di tongkrongan
@@ -32,8 +32,9 @@ Aturan penting:
 - Fokus ke vibe, situasi, atau konteks lucu
 - Jawaban maksimal 1–2 kalimat
 - Punchline di akhir kalau bisa
-- Roasting diperbolehkan selama konteks bercanda
+- Roasting diperbolehkan
 - Jika ada soal atau materi, jelaskan dengan serius
+- Jika user bertanya dengan serius, jawab dengan serius dan tidak ada maksimal jumlah kalimat
 
 Anggap user adalah temen dekat.
 `;
@@ -48,23 +49,18 @@ const training_dataset = [
   ["Beri sarkasme untuk foto ini", "Ini pose mikir masa depan atau nunggu WiFi nyambung? 🤔"],
   ["Beri sarkasme untuk foto ini", "Kelihatannya produktif, padahal cuma mindahin laptop doang. 💀"],
   ["Beri sarkasme untuk foto ini", "Serius amat, kayak abis dimarahin dosen tapi salah jurusan WKWKWK."],
-  ["Beri sarkasme untuk foto ini", "Lah ini sih bukan foto, ini curhat visual WKWKWKW."],
   ["Beri sarkasme untuk foto ini", "Cocok sih, vibes-nya anak deadline tapi pura-pura healing.🙃"],
   ["Beri sarkasme untuk foto ini", "Estetik iya, bahagia belum tentu WKWKWK."],
   ["Beri sarkasme untuk foto ini", "Mukanya bilang 'santai', matanya bilang 'tolong'. 😅"],
   ["Beri sarkasme untuk foto ini", "Ini kalo dijadiin meme langsung relatable nasional."],
   ["Beri sarkasme untuk foto ini", "Foto doang rapi, hidupnya masih beta version. 😅"],
   ["Beri sarkasme untuk foto ini", "Kelihatan sibuk, padahal nungguin chat yang nggak masuk. 😂"],
-  ["Beri sarkasme untuk foto ini", "Ini orang habis produktif atau cuma ganti angle?"],
 
   ["Beri sarkasme untuk foto ini", "Ini masakan atau eksperimen kimia tahap awal? 😆"],
   ["Beri sarkasme untuk foto ini", "MasterChef lihat ini langsung skip episode deh."],
 
   ["Beri sarkasme untuk foto ini", "Satu meja, satu tujuan: pura-pura hidup baik-baik."],
   ["Beri sarkasme untuk foto ini", "Ngopi biar kelihatan dewasa, padahal tugas belum kelar."],
-
-  ["Beri sarkasme untuk foto ini", "Dia hidupnya damai, kita yang ribet sendiri."],
-  ["Beri sarkasme untuk foto ini", "Ini bukan hewan peliharaan, ini role model."],
 
   ["Beri sarkasme untuk foto ini", "Angle-nya dapet, realita-nya nyusul."],
   ["Beri sarkasme untuk foto ini", "Ini pose 'gue baik-baik aja' padahal aslinya enggak. 😅"],
@@ -181,6 +177,10 @@ player.events.on('playerError', (queue, error) => {
 client.on("messageCreate", async (message) => {
     if (message.author.bot || !message.guild) return;
     if (message.attachments.size > 0) {
+        const containsTextMessage = message.content && message.content.length > 0
+        if (containsTextMessage) {
+            console.log(message.content ? `[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.content}` : '');
+        }    
         console.log(`[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.attachments.first().url}`)
         socketMessages.push({
             timestamp: new Date().toLocaleString(),
@@ -195,45 +195,50 @@ client.on("messageCreate", async (message) => {
 
         
         try {
-        const imageUrl = message.attachments.first().url;
-        const response = await fetch(imageUrl);
-        const imageArrayBuffer = await response.arrayBuffer();
-        const base64ImageData = Buffer.from(imageArrayBuffer).toString("base64");
+            const imageUrl = message.attachments.first().url;
+            const response = await fetch(imageUrl);
+            const imageArrayBuffer = await response.arrayBuffer();
+            const base64ImageData = Buffer.from(imageArrayBuffer).toString("base64");
 
-        const fewShotPrompt = buildFewShotPrompt(
-            training_dataset,
-            "Candakan foto ini"
-        );
+            const fewShotPrompt = buildFewShotPrompt(
+                training_dataset,
+                "Beri sarkasme pada foto ini"
+            );
 
-        const finalPrompt = `
-            ${SYSTEM_PROMPT}
+            const finalPrompt = `
+                ${SYSTEM_PROMPT}
 
-            ${fewShotPrompt}
+                ${containsTextMessage ? "" : fewShotPrompt}
 
-            User: Candakan foto ini
-            Bot:
-        `;
+                User: ${containsTextMessage ? message.content : "Beri sarkasme pada foto ini"}
+                Bot:
+            `;
 
-        const result = await ai.models.generateContent({
-            model: "gemini-2.5-flash-lite",
-            temperature: 1.5,
-            contents: [
-            {
-                inlineData: {
-                mimeType: "image/webp",
-                data: base64ImageData,
-                },
-            },
-            {
-                text: finalPrompt,
-            },
-            ],
-        });
-
-        await message.reply(result.text);
+            const result = await ai.models.generateContent({
+                model: containsTextMessage ? "gemini-3-flash-preview" : "gemini-2.5-flash-lite",
+                temperature: containsTextMessage ? 1.0 : 1.75,
+                contents: [
+                    {
+                        inlineData: {
+                        mimeType: "image/webp",
+                        data: base64ImageData,
+                        },
+                    },
+                    {
+                        text: finalPrompt,
+                    },
+                ],
+            });
+            await message.reply(result.text);
+            
         } catch (error) {
-            console.error("Error processing image:", error);
-            await message.reply("😴😴");
+            if (error.contains("Invalid Form Body")) {
+                await message.reply(`\`\`\`${result.text}\`\`\``);
+            }
+            else {
+                console.error("Error processing image:", error);
+                await message.reply("😴😴");
+            }
         }
     }
     else {
