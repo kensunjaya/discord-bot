@@ -139,7 +139,7 @@ function buildFewShotPrompt(dataset, task) {
 client.on('ready', async (c) => {
     console.log(`${c.user.tag} is online`);
     client.user.setPresence({
-        activities: [{ name: `for mentions 👀 | Tag me if you dare`, type: ActivityType.Watching }],
+        activities: [{ name: `Mention me in chat if you dare!   `, type: ActivityType.Custom }],
         status: 'online',
     });
 
