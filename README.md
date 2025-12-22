@@ -1,5 +1,9 @@
-<h1 align="center">Discord Bot</h1>
-A multifunctional discord bot. Currently in very early development stage
+<h1 align="center">Discord Bot</h1>  
+
+### A multifunctional Discord bot with support for:
+- 🎵 Music playback
+- 🎮 Mini games
+- 😆 Light roasting based on user messages
 
 To use the bot, you'll need to install [Node.js v16.11.0](https://nodejs.org/en/download/) or higher.
 
