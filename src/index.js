@@ -16,7 +16,7 @@ const e = require('cors');
 
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-const SYSTEM_PROMPT = `
+const SYSTEM_PROMPT_IMAGE = `
 Kamu adalah bot Discord yang hobi bercanda, sarkastik, dan roasting ringan.
 Tugasmu adalah memberi komentar lucu dan sarkasme tentang foto yang dikirim user.
 
@@ -31,6 +31,28 @@ Aturan penting:
 - JANGAN menyebut kata "foto ini"
 - Fokus ke vibe, situasi, atau konteks lucu
 - Jawaban maksimal 1–2 kalimat
+- Punchline di akhir kalau bisa
+- Roasting diperbolehkan
+- Jika ada soal atau materi, jelaskan dengan serius
+- Jika user bertanya dengan serius, jawab dengan serius dan tidak ada maksimal jumlah kalimat
+
+Anggap user adalah temen dekat.
+`;
+
+const SYSTEM_PROMPT_TEXT = `
+Kamu adalah bot Discord yang hobi bercanda, sarkastik, dan roasting ringan.
+Tugasmu adalah memberi komentar lucu dan sarkasme tentang teks yang dikirim user.
+
+Gaya bahasa:
+- Santai, gaul, seperti ngobrol di tongkrongan
+- Boleh roasting & nyindir, tapi tetap bercanda
+- Jangan terdengar seperti AI atau formal
+- Lebih pilih sarkas cerdas daripada sopan
+
+Aturan penting:
+- JANGAN pakai kalimat pembuka
+- Fokus ke vibe, situasi, atau konteks lucu
+- Jawaban maksimal 1–3 kalimat
 - Punchline di akhir kalau bisa
 - Roasting diperbolehkan
 - Jika ada soal atau materi, jelaskan dengan serius
@@ -101,6 +123,7 @@ const player = new Player(client);
 const util = new Utility();
 const Embed = new EmbedMessage();
 const guildHandler = new Map();
+const promptHistory = new Map();
 const queueHandler = new Map();
 const wordScrambleChannels = new Map();
 
@@ -178,8 +201,10 @@ client.on("messageCreate", async (message) => {
     if (message.author.bot || !message.guild) return;
     if (message.attachments.size > 0) {
         const containsTextMessage = message.content && message.content.length > 0
+        let prompt = "";
         if (containsTextMessage) {
             console.log(message.content ? `[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.content}` : '');
+            prompt = message.content.replace(/<@!?(\d+)>/g, '').trim();
         }    
         console.log(`[${message.guild.name} (${message.channel.name})] : [${message.author.username}] >> ${message.attachments.first().url}`)
         socketMessages.push({
@@ -206,11 +231,11 @@ client.on("messageCreate", async (message) => {
             );
 
             const finalPrompt = `
-                ${SYSTEM_PROMPT}
+                ${SYSTEM_PROMPT_IMAGE}
 
                 ${containsTextMessage ? "" : fewShotPrompt}
 
-                User: ${containsTextMessage ? message.content : "Beri sarkasme pada foto ini"}
+                User: ${containsTextMessage ? prompt : "Beri sarkasme pada foto ini"}
                 Bot:
             `;
 
@@ -273,6 +298,55 @@ client.on("messageCreate", async (message) => {
                     await mongo.updateOne("Users", { userId: message.author.id }, { balance: { 'usd': user.balance.usd + 1 } });
                 }
             });
+        }
+        else if (message.mentions.has(client.user)) {
+            const prompt = message.content.replace(/<@!?(\d+)>/g, '').trim();
+            if (prompt.length === 0) {
+                await message.reply("?");
+                return;
+            }
+            
+            if (!promptHistory.has(message.channel)) {
+                promptHistory.set(message.channel, []);
+            }
+            
+            const history = promptHistory.get(message.channel);
+            
+            let conversationText = `${SYSTEM_PROMPT_TEXT}\n\n`;
+            
+            for (const msg of history) {
+                if (msg.role === 'user') {
+                    conversationText += `User: ${msg.content}\n`;
+                } else if (msg.role === 'assistant') {
+                    conversationText += `Bot: ${msg.content}\n`;
+                }
+            }
+            
+            conversationText += `User: ${prompt}\nBot:`;
+            
+            history.push({ role: 'user', content: prompt });
+            
+            try {
+                const response = await ai.models.generateContent({
+                    model: "gemini-3-flash-preview",
+                    temperature: 1.0,
+                    contents: [
+                        { text: conversationText }
+                    ]
+                });
+                
+                history.push({ role: 'assistant', content: response.text });
+                
+                // Limit history to last 20 messages
+                if (history.length > 20) {
+                    history.splice(0, history.length - 20);
+                }
+                
+                await message.reply(response.text);
+            } catch (error) {
+                console.error("Error generating response:", error);
+                await message.reply("😴😴");
+            }
         }
     }
     
