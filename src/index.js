@@ -139,7 +139,8 @@ function buildFewShotPrompt(dataset, task) {
 client.on('ready', async (c) => {
     console.log(`${c.user.tag} is online`);
     client.user.setPresence({
-        activities: [{ name: `Type !deploy to enable commands`, type: ActivityType.Custom }],
+        activities: [{ name: `for mentions 👀 | Tag me if you dare`, type: ActivityType.Watching }],
+        status: 'online',
     });
 
     await player.extractors.register(YoutubeiExtractor, {
