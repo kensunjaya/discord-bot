@@ -78,7 +78,6 @@ const training_dataset = [
   ["Beri sarkasme untuk foto ini", "Foto doang rapi, hidupnya masih beta version. 😅"],
   ["Beri sarkasme untuk foto ini", "Kelihatan sibuk, padahal nungguin chat yang nggak masuk. 😂"],
 
-  ["Beri sarkasme untuk foto ini", "Ini masakan atau eksperimen kimia tahap awal? 😆"],
   ["Beri sarkasme untuk foto ini", "MasterChef lihat ini langsung skip episode deh."],
 
   ["Beri sarkasme untuk foto ini", "Satu meja, satu tujuan: pura-pura hidup baik-baik."],
@@ -241,7 +240,7 @@ client.on("messageCreate", async (message) => {
             `;
 
             const result = await ai.models.generateContent({
-                model: containsTextMessage ? "gemini-3-flash-preview" : "gemini-2.5-flash-lite",
+                model: containsTextMessage ? "gemini-3-flash" : "gemini-2.5-flash-lite",
                 temperature: containsTextMessage ? 1.0 : 1.75,
                 contents: [
                     {
@@ -329,7 +328,7 @@ client.on("messageCreate", async (message) => {
             
             try {
                 const response = await ai.models.generateContent({
-                    model: "gemini-3-flash-preview",
+                    model: "gemini-3-flash",
                     temperature: 1.0,
                     contents: [
                         { text: conversationText }
