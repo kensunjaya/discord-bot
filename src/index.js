@@ -78,6 +78,7 @@ const training_dataset = [
   ["Beri sarkasme untuk foto ini", "Foto doang rapi, hidupnya masih beta version. 😅"],
   ["Beri sarkasme untuk foto ini", "Kelihatan sibuk, padahal nungguin chat yang nggak masuk. 😂"],
 
+  ["Beri sarkasme untuk foto ini", "Ini masakan atau eksperimen kimia tahap awal? 😆"],
   ["Beri sarkasme untuk foto ini", "MasterChef lihat ini langsung skip episode deh."],
 
   ["Beri sarkasme untuk foto ini", "Satu meja, satu tujuan: pura-pura hidup baik-baik."],
@@ -240,7 +241,7 @@ client.on("messageCreate", async (message) => {
             `;
 
             const result = await ai.models.generateContent({
-                model: containsTextMessage ? "gemini-3-flash" : "gemini-2.5-flash-lite",
+                model: containsTextMessage ? "gemini-3-flash-preview" : "gemini-2.5-flash-lite",
                 temperature: containsTextMessage ? 1.0 : 1.75,
                 contents: [
                     {
@@ -257,7 +258,7 @@ client.on("messageCreate", async (message) => {
             await message.reply(result.text);
             
         } catch (error) {
-            if (error.contains("Invalid Form Body")) {
+            if (error.message.includes("Invalid Form Body")) {
                 await message.reply(`\`\`\`${result.text}\`\`\``);
             }
             else {
@@ -328,7 +329,7 @@ client.on("messageCreate", async (message) => {
             
             try {
                 const response = await ai.models.generateContent({
-                    model: "gemini-3-flash",
+                    model: "gemini-3-flash-preview",
                     temperature: 1.0,
                     contents: [
                         { text: conversationText }
